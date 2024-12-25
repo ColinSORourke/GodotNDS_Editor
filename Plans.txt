@@ -1,0 +1,119 @@
+------------------------------------------
+TripleE Rom Editor Plans
+------------------------------------------
+TripleE (Edit, Expand, Enjoy) will be a ROM Editor for the Gen IV Pokemon Games.
+Inspired by PokEditor, HG-Engine, and a few others, it will provide the ability to not only edit, but expand, most major NARCs that run Pokemon Gen IV, and output a working ROM.
+
+
+----- Basic Project Folder Functionality -----
+The Launch Scene will ask user to create a new project or open an existing project.
+	Create: Ask user for a name and location to create project folder.
+		Given a name and valid location, it will create a folder with that name, place a Project.TXT inside the Folder
+		And then transition to opening that project.
+	Project: The Project Scene will display the contents of Project TXT, and have a close button.
+
+----- Basic Narc Table Reading Functionality -----
+There will be a NARCUtility node that can read from Table NARCs
+	TableConfigure()
+		Inputs: File, Column Array
+		Any scene that wants to read from a given NARC first should call TableConfigure to initialize the reader.
+	Read()
+		Inputs: Row#
+		Outputs: Decimal Values for each column in the given row.
+		Errors: 
+			If the given Size x Count x Row would produce an address outside of the table.
+
+----- ROM Packing/Unpacking -----
+Creating a new project will also ask for a ROM
+The program will check if it's a ROM I know how to handle (Just English HeartGold initially)
+	If it is not, we will throw a "Can't Create Project"
+Then, in the project creation process, will unpack this rom into a file directory to manipulate inside the project folder.
+
+In the Project Scene, will provide an export button that re-packs and saves the ROM.
+
+----- Narc Table Editing Functionality -----
+NARCUtility node will have the ability to write to Table.
+	Write()
+		Inputs: Row#, [Decimal Array]
+		Outputs: Edits to the current Table File
+		Errors: 
+			If the Decimal Value for a given column is larger than that columns binary size.
+			If fewer or greater values are given than spaces in the column.
+
+
+----- Eventual Functionality -----
+EDIT MONS DATA
+	Edit Mon Personal Table
+	Edit Mon Learnset Table
+	Edit Mon Evolution Table
+	Edit Mon Egg Move Table
+	Edit Mon TM Move Table
+	Edit Mon Tutor Move Table
+
+	Edit Growth Table?
+
+EDIT MONS TEXT
+	Edit Mon Name
+	Edit Mon category
+	Edit Mon Dex Entry
+	Edit Mon Height
+	Edit Mon Weight
+	Edit Mon Body Type
+	
+
+EDIT MON DEX
+	Edit National Dex List
+	Edit Regional Dex List
+	Edit Mon Area Data
+	Edit Mon's Baby Form
+	Edit Mon's Dex Display (Low Priority)
+	// Auto Generate Dex Sort Lists from other information on Export
+
+SPRITES
+	Draw Sprite&Palette.
+	Draw BTX0
+	Export Sprite&Palette combination as PNG
+	Convert PNG into Sprite + Palette file.
+	Convert PNG into BTX0 file.
+	Import Sprite&Palette files to replace currently viewed sprite/palette.
+	Import BTX0 file to replace currently viewed BTX0
+	Edit which Palette some Sprites use.
+
+EDIT OTHER TABLE
+	Edit Moves Table
+	Edit Items Table
+	Edit Encounters tables
+		Field
+		Water
+		Sound
+		Rock Smash
+		Safari
+		Headbutt
+		Bug Catching?
+	Edit Trainer Tables
+	Edit Trainer 'files'
+	Edit Type Effectiveness
+
+	Edit PokeMart table?
+	Edit In-Game Trades?
+	Edit Mom items?
+
+
+EDIT OTHER TEXT
+	Edit Move Names
+	Edit Item Names
+	Edit Any Text Bank?
+
+EXPAND
+	Expand ARM9 with Synthetic Overlay
+	Add X many PokeMon
+	Add X many moves
+	Add X many items
+	Expand Evolution Table
+	Expand Learnset Table
+	Expand Learnset Table Format
+	Add Fairy Type
+
+EDIT MOVES FANCY
+	Edit Battle Scripts
+	Edit Anim Scripts

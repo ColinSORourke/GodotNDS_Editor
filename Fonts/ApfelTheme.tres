@@ -1,0 +1,7 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://08hv88tc1qqh"]
+
+[ext_resource type="FontFile" uid="uid://upta6s58xuhr" path="res://Assets/CC0/Fonts/CLT Apfel Grotezk/desktop/ApfelGrotezk-Mittel.otf" id="1_1ifar"]
+
+[resource]
+default_font = ExtResource("1_1ifar")
+default_font_size = 40

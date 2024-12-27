@@ -1,0 +1,7 @@
+----- ARM9 Info -----
+
+Addresses
+	000CD0 - Expansion Branch Code
+	1064EC - Branch Subroutine
+	70ECE - 2A for #of Evolutions * 6
+	10051C - Start of Junk Items in Item Table

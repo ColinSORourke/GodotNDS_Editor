@@ -1,0 +1,33 @@
+----- CREDITS -----
+People I have to thank!
+
+TurtleIsaac!
+	Heavily referenced
+	https://github.com/turtleisaac/Nds4j
+		https://github.com/turtleisaac/PokEditor
+		https://github.com/turtleisaac/PokEditor-Core
+	Inspired by
+		PokEditor
+
+BluRose!
+	Heavily referenced
+		https://www.pokecommunity.com/threads/hg-adding-a-new-type-to-heart-gold-using-fairy-as-an-example.439891/ 
+		https://github.com/BluRosie/hg-engine
+	Using code from
+		https://github.com/BluRosie/hgss-monexpansion
+		https://github.com/BluRosie/hgss-moves
+		
+
+Mikelan98 & Nomura
+	Used Code from
+		https://pokehacking.com/tutorials/ramexpansion/
+		
+Drayano
+	Used Code From
+		https://pastebin.com/VkhqxbpP 
+	Inspired by
+		Renegade Platinum
+		
+JackHack96
+	Using Library
+		https://github.com/JackHack96/jNdstool

@@ -1,10 +1,10 @@
 [gd_scene load_steps=9 format=3 uid="uid://dokxbayunkgwo"]
 
-[ext_resource type="Texture2D" uid="uid://b2kpqy7l0eoni" path="res://icon.svg" id="1_1gjae"]
+[ext_resource type="Texture2D" uid="uid://b2kpqy7l0eoni" path="res://Assets/icon.svg" id="1_1gjae"]
 [ext_resource type="Theme" uid="uid://08hv88tc1qqh" path="res://Fonts/ApfelTheme.tres" id="2_ksiif"]
-[ext_resource type="Script" path="res://create_proj.gd" id="2_qxyfr"]
-[ext_resource type="StyleBox" uid="uid://co1mcfxjjtg57" path="res://buttonSBoxClick.tres" id="3_0tcee"]
-[ext_resource type="StyleBox" uid="uid://jjq6i5iwgye" path="res://buttonSBoxNorm.tres" id="4_7btr2"]
+[ext_resource type="Script" path="res://Scripts/create_proj.gd" id="2_qxyfr"]
+[ext_resource type="StyleBox" uid="uid://co1mcfxjjtg57" path="res://Assets/buttonSBoxClick.tres" id="3_0tcee"]
+[ext_resource type="StyleBox" uid="uid://jjq6i5iwgye" path="res://Assets/buttonSBoxNorm.tres" id="4_7btr2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_71f0l"]
 border_width_left = 3
@@ -89,7 +89,7 @@ size_flags_horizontal = 4
 theme_override_constants/separation = 10
 script = ExtResource("2_qxyfr")
 
-[node name="FileDialog" type="FileDialog" parent="MarginContainer/VBoxContainer2/CreateProj"]
+[node name="DirDialog" type="FileDialog" parent="MarginContainer/VBoxContainer2/CreateProj"]
 title = "Open a Directory"
 size = Vector2i(303, 180)
 ok_button_text = "Select Current Folder"
@@ -98,12 +98,44 @@ file_mode = 2
 access = 2
 use_native_dialog = true
 
+[node name="RomDialog" type="FileDialog" parent="MarginContainer/VBoxContainer2/CreateProj"]
+auto_translate_mode = 1
+title = "Open a File"
+size = Vector2i(303, 180)
+ok_button_text = "Open"
+dialog_hide_on_ok = true
+file_mode = 0
+access = 2
+use_native_dialog = true
+
+[node name="RomLabel" type="Label" parent="MarginContainer/VBoxContainer2/CreateProj"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+theme = ExtResource("2_ksiif")
+theme_override_font_sizes/font_size = 32
+theme_override_styles/normal = SubResource("StyleBoxFlat_71f0l")
+text = "Rom"
+
+[node name="RomDialogBtn" type="Button" parent="MarginContainer/VBoxContainer2/CreateProj"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+focus_mode = 0
+theme = ExtResource("2_ksiif")
+theme_override_styles/hover_pressed = ExtResource("3_0tcee")
+theme_override_styles/hover = ExtResource("4_7btr2")
+theme_override_styles/pressed = ExtResource("3_0tcee")
+theme_override_styles/normal = ExtResource("4_7btr2")
+text = "Pick Rom"
+
 [node name="PathLabel" type="Label" parent="MarginContainer/VBoxContainer2/CreateProj"]
 custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 theme = ExtResource("2_ksiif")
+theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxFlat_71f0l")
 text = "Sample/Path/Here"
+autowrap_mode = 2
 
 [node name="DialogBtn" type="Button" parent="MarginContainer/VBoxContainer2/CreateProj"]
 layout_mode = 2
@@ -125,6 +157,7 @@ focus_mode = 1
 theme = ExtResource("2_ksiif")
 theme_override_styles/focus = SubResource("StyleBoxFlat_o864c")
 theme_override_styles/normal = SubResource("StyleBoxFlat_g25l6")
+text = "MyProject"
 placeholder_text = "ProjectName"
 expand_to_text_length = true
 
@@ -141,6 +174,22 @@ theme_override_styles/normal = ExtResource("4_7btr2")
 text = "Create
 "
 
-[connection signal="dir_selected" from="MarginContainer/VBoxContainer2/CreateProj/FileDialog" to="MarginContainer/VBoxContainer2/CreateProj" method="onDirSelected"]
+[node name="CompileBtn" type="Button" parent="MarginContainer/VBoxContainer2/CreateProj"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+focus_mode = 0
+theme = ExtResource("2_ksiif")
+theme_override_styles/hover_pressed = ExtResource("3_0tcee")
+theme_override_styles/hover = ExtResource("4_7btr2")
+theme_override_styles/pressed = ExtResource("3_0tcee")
+theme_override_styles/normal = ExtResource("4_7btr2")
+text = "Compile
+"
+
+[connection signal="dir_selected" from="MarginContainer/VBoxContainer2/CreateProj/DirDialog" to="MarginContainer/VBoxContainer2/CreateProj" method="onDirSelected"]
+[connection signal="file_selected" from="MarginContainer/VBoxContainer2/CreateProj/RomDialog" to="MarginContainer/VBoxContainer2/CreateProj" method="onRomSelected"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer2/CreateProj/RomDialogBtn" to="MarginContainer/VBoxContainer2/CreateProj" method="openRomDialog"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer2/CreateProj/DialogBtn" to="MarginContainer/VBoxContainer2/CreateProj" method="openDialog"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer2/CreateProj/CreateBtn" to="MarginContainer/VBoxContainer2/CreateProj" method="createProject"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer2/CreateProj/CompileBtn" to="MarginContainer/VBoxContainer2/CreateProj" method="compileProject"]

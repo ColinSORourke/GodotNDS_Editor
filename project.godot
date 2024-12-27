@@ -11,6 +11,10 @@ config_version=5
 [application]
 
 config/name="TripleE"
-run/main_scene="res://Home.tscn"
+run/main_scene="res://Scenes/Home.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="res://Assets/icon.svg"
+
+[autoload]
+
+NdsGd="*res://Scenes/NDS_GD.tscn"

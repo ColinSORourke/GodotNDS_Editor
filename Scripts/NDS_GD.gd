@@ -1,10 +1,11 @@
 extends Node
 
-# THIS FILE MODELED AFTER
+# This code is a port of JackHack96's awesome jNndstool to GDScript.
 # https://github.com/JackHack96/jNdstool
 
 static var ExtractionLog: FileAccess
 
+# Main Extract Function
 func extractROM(romPath: String, dirPath: String) -> void:
 	var dir = DirAccess.open(dirPath)
 	
@@ -27,7 +28,6 @@ func extractROM(romPath: String, dirPath: String) -> void:
 	romFile.seek(header.fntOffset)
 	
 	NitroDirectory.loadDirFNT(root, romFile, romFile.get_position(), startOffsets, endOffsets)
-	print(root.currentDirId)
 	
 	dir.make_dir("data")
 	NitroDirectory.unpackFileTree(romFile, dirPath.path_join("data"), root)
@@ -95,7 +95,7 @@ func extractROM(romPath: String, dirPath: String) -> void:
 	romFile.close()
 	pass
 
-
+# Rebuild ROM from extracted Database
 func buildROM(dirPath: String, romPath: String) -> void:
 	var haveAllFiles = true
 	
@@ -156,7 +156,6 @@ func buildROM(dirPath: String, romPath: String) -> void:
 		
 		
 		NitroDirectory.loadDirA(dirPath.path_join("data"), rootDir, 0xf000, overlays.size(), fimgOffset)
-		print(rootDir.currentDirId)
 		
 		reader = FileAccess.open(dirPath.path_join("header.bin"), FileAccess.READ)
 		var header: NitroHeader = NitroHeader.readHeader(reader)
@@ -241,30 +240,23 @@ func buildROM(dirPath: String, romPath: String) -> void:
 		romFile.close()
 		reader.close()
 	
+
+# Utility Function
 func addPadding(offset: int) -> int:
 	if (offset % 4 != 0):
 		return offset + (4 - offset % 4)
 	else:
 		return offset
 		
-
+# Utility Function
 func getFileSize(path: String) -> int:
 	var tmp = FileAccess.open(path, FileAccess.READ)
 	var size = tmp.get_length()
 	tmp.close()
 	return size;
 		
-###############
-# Byte = 8 Bits
-# 1 Hexadecimal Digit = 4 Bits
-# Word = 16 Bits
-#
-#
-#
-#
-################
 
-
+# Nitro Classes representing main files in a rom.
 class NitroHeader:
 	static var headerValues = ["gameTitle", "gameCode", "makerCode", "unitCode", "encryptionSeedSelect", "deviceCapacity", "reserved1", "dsiFlags", "ndsRegion", "romVersion", "autoStart", "arm9RomOffset", "arm9EntryAddress", "arm9RamAddress", "arm9Size", "arm7RomOffset", "arm7EntryAddress", "Arm7RamAddress", "arm7Size", "fntOffset", "fntSize", "fatOffset", "fatSize", "arm9OverlayOffset", "arm9OverlaySize", "arm7OverlayOffset", "arm7OverlaySize", "port40001A4hNormalCommand", "port40001A4hKey1Command", "iconOffset", "secureAreaChecksum", "secureAreaDelay", "arm9AutoLoad", "arm7AutoLoad", "secureAreaDisable", "usedRomSize", "headerSize", "reserved2", "reserved3", "logo", "logoChecksum", "headerChecksum", "debugRomOffset", "debugSize", "reserved4", "reserved5"]
 	

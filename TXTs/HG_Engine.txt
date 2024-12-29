@@ -1,0 +1,73 @@
+----- HG-ENGINE.txt -----
+
+For reference, the functionalities provided in HG-Engine
+
+Editors
+* Pokemon Data
+* Move Scripting
+* Trainer Data
+* Wild Encounter Tables
+* Evolution Data
+* Item Data
+
+Expansions
+* Pokemon
+* Moves
+* Abilities
+* Items
+* Mega Evolution
+* Forms
+* Mega Evolution (OPTIONAL)
+
+Pre-built-Assets
+    * PokeMon
+        * Data
+        * Sprites
+    * Ability Scripts
+    * Moves
+        * Data
+        * Scripts
+    * Updates
+        * Abilities
+        * Moves
+    * Evolution Scripts
+    * Items
+        * Sprites
+        * Data
+        * Scripts
+
+Data Structures (BREAKS COMPATIBILITY)
+    * Trainer Mon Data Structure
+    * Trainer Data Structure
+    * Learnset Data Structure (Optional)
+    * Wild Encounter Data Structure
+    * Evolution Data Structure
+    * Save Data Structure (Optional)
+
+Code Patches (All Optional)
+* Number Tweaks
+    * Vitamin EV Caps
+    * 30 PC Boxes
+    * 60FPS Battles / Game
+    * Forced 'Set' Battles
+    * Learnset Total Moves
+    * Friendship Evolution Value
+* Quality of Life
+    * Transparent Text Boxes
+    * Reusable Repels
+    * Restore Items
+    * Disable End_Of_Turn Weather Messages
+    * Disable Overworld Poison
+    * EV-IV Viewer
+    * Reusable TMs
+    * Deletable HMs
+    * AntiPiracy
+    * Fast Text Printing
+* Design Patches
+    * Hidden Ability Flags
+    * Modern Gen Experience
+    * Level Cap
+    * 10% Chance of Wild Double Battles
+    * BDHCAM routine
+    * Start with national Dex
+    * Fairy Type

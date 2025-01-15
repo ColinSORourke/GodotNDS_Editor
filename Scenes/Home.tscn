@@ -1,7 +1,7 @@
 [gd_scene load_steps=11 format=3 uid="uid://dokxbayunkgwo"]
 
 [ext_resource type="Texture2D" uid="uid://b2kpqy7l0eoni" path="res://Assets/icon.svg" id="1_1gjae"]
-[ext_resource type="Script" path="res://Scenes/InitMenu.gd" id="2_ioxfu"]
+[ext_resource type="Script" path="res://Scripts/InitMenu.gd" id="2_ioxfu"]
 [ext_resource type="Theme" uid="uid://08hv88tc1qqh" path="res://Fonts/ApfelTheme.tres" id="2_ksiif"]
 [ext_resource type="Script" path="res://Scripts/create_proj.gd" id="2_qxyfr"]
 [ext_resource type="StyleBox" uid="uid://co1mcfxjjtg57" path="res://Assets/buttonSBoxClick.tres" id="3_0tcee"]
@@ -67,40 +67,45 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.101961, 0.101961, 0.101961, 1)
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 80
-theme_override_constants/margin_top = 80
-theme_override_constants/margin_right = 80
-theme_override_constants/margin_bottom = 80
-
-[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer"]
-layout_mode = 2
-
-[node name="CenterContainer" type="CenterContainer" parent="MarginContainer/VBoxContainer2"]
-layout_mode = 2
-
-[node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer2/CenterContainer"]
+[node name="TextureRect" type="TextureRect" parent="ColorRect"]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
+offset_left = 750.0
+offset_top = 80.0
+offset_right = 850.0
+offset_bottom = 180.0
 texture = ExtResource("1_1gjae")
 expand_mode = 3
 stretch_mode = 4
 
-[node name="Main" type="VBoxContainer" parent="MarginContainer/VBoxContainer2"]
-layout_mode = 2
+[node name="Main" type="VBoxContainer" parent="ColorRect"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -195.0
+offset_top = -396.0
+offset_right = 195.0
+offset_bottom = -212.0
+grow_horizontal = 2
+grow_vertical = 2
 size_flags_horizontal = 4
-theme_override_constants/separation = 10
+theme_override_constants/separation = 20
 script = ExtResource("2_ioxfu")
 
-[node name="AcceptDialog" type="AcceptDialog" parent="MarginContainer/VBoxContainer2/Main"]
+[node name="AcceptDialog" type="AcceptDialog" parent="ColorRect/Main"]
+auto_translate_mode = 1
+initial_position = 1
+size = Vector2i(400, 200)
+unresizable = true
+force_native = true
+theme = ExtResource("2_ksiif")
+theme_override_styles/panel = SubResource("StyleBoxFlat_vpi5q")
+dialog_text = "This is a descriptive error message!"
 
-[node name="DirDialog" type="FileDialog" parent="MarginContainer/VBoxContainer2/Main"]
+[node name="DirDialog" type="FileDialog" parent="ColorRect/Main"]
 auto_translate_mode = 1
 title = "Open a Directory"
 size = Vector2i(303, 180)
@@ -110,7 +115,7 @@ file_mode = 2
 access = 2
 use_native_dialog = true
 
-[node name="NewBtn" type="Button" parent="MarginContainer/VBoxContainer2/Main"]
+[node name="NewBtn" type="Button" parent="ColorRect/Main"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -122,7 +127,7 @@ theme_override_styles/pressed = ExtResource("3_0tcee")
 theme_override_styles/normal = ExtResource("4_7btr2")
 text = "New Project"
 
-[node name="OpenBtn" type="Button" parent="MarginContainer/VBoxContainer2/Main"]
+[node name="OpenBtn" type="Button" parent="ColorRect/Main"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -134,14 +139,22 @@ theme_override_styles/pressed = ExtResource("3_0tcee")
 theme_override_styles/normal = ExtResource("4_7btr2")
 text = "Open Project"
 
-[node name="CreateProj" type="VBoxContainer" parent="MarginContainer/VBoxContainer2"]
+[node name="CreateProj" type="VBoxContainer" parent="ColorRect"]
 visible = false
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 208.0
+offset_right = 200.0
+offset_bottom = 708.0
+grow_horizontal = 2
 size_flags_horizontal = 4
-theme_override_constants/separation = 10
+theme_override_constants/separation = 20
 script = ExtResource("2_qxyfr")
 
-[node name="AcceptDialog" type="AcceptDialog" parent="MarginContainer/VBoxContainer2/CreateProj"]
+[node name="AcceptDialog" type="AcceptDialog" parent="ColorRect/CreateProj"]
 initial_position = 1
 size = Vector2i(400, 200)
 unresizable = true
@@ -150,7 +163,7 @@ theme = ExtResource("2_ksiif")
 theme_override_styles/panel = SubResource("StyleBoxFlat_vpi5q")
 dialog_text = "This is a descriptive error message!"
 
-[node name="DirDialog" type="FileDialog" parent="MarginContainer/VBoxContainer2/CreateProj"]
+[node name="DirDialog" type="FileDialog" parent="ColorRect/CreateProj"]
 title = "Open a Directory"
 size = Vector2i(303, 180)
 ok_button_text = "Select Current Folder"
@@ -159,7 +172,7 @@ file_mode = 2
 access = 2
 use_native_dialog = true
 
-[node name="RomDialog" type="FileDialog" parent="MarginContainer/VBoxContainer2/CreateProj"]
+[node name="RomDialog" type="FileDialog" parent="ColorRect/CreateProj"]
 auto_translate_mode = 1
 title = "Open a File"
 size = Vector2i(303, 180)
@@ -169,15 +182,15 @@ file_mode = 0
 access = 2
 use_native_dialog = true
 
-[node name="RomLabel" type="Label" parent="MarginContainer/VBoxContainer2/CreateProj"]
+[node name="RomLabel" type="Label" parent="ColorRect/CreateProj"]
 custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 theme = ExtResource("2_ksiif")
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 40
 theme_override_styles/normal = SubResource("StyleBoxFlat_71f0l")
 text = "Rom"
 
-[node name="RomDialogBtn" type="Button" parent="MarginContainer/VBoxContainer2/CreateProj"]
+[node name="RomDialogBtn" type="Button" parent="ColorRect/CreateProj"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -189,19 +202,20 @@ theme_override_styles/pressed = ExtResource("3_0tcee")
 theme_override_styles/normal = ExtResource("4_7btr2")
 text = "Pick Rom"
 
-[node name="NameEdit" type="LineEdit" parent="MarginContainer/VBoxContainer2/CreateProj"]
+[node name="NameEdit" type="LineEdit" parent="ColorRect/CreateProj"]
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 focus_mode = 1
 theme = ExtResource("2_ksiif")
+theme_override_font_sizes/font_size = 45
 theme_override_styles/focus = SubResource("StyleBoxFlat_o864c")
 theme_override_styles/normal = SubResource("StyleBoxFlat_g25l6")
 text = "MyProject"
 placeholder_text = "ProjectName"
 expand_to_text_length = true
 
-[node name="CreateBtn" type="Button" parent="MarginContainer/VBoxContainer2/CreateProj"]
+[node name="CreateBtn" type="Button" parent="ColorRect/CreateProj"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -214,7 +228,7 @@ theme_override_styles/normal = ExtResource("4_7btr2")
 text = "Create
 "
 
-[node name="BackBtn" type="Button" parent="MarginContainer/VBoxContainer2/CreateProj"]
+[node name="BackBtn" type="Button" parent="ColorRect/CreateProj"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
@@ -227,11 +241,13 @@ theme_override_styles/normal = ExtResource("4_7btr2")
 text = "Back
 "
 
-[connection signal="pressed" from="MarginContainer/VBoxContainer2/Main/NewBtn" to="MarginContainer/VBoxContainer2/CreateProj" method="open"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer2/Main/NewBtn" to="MarginContainer/VBoxContainer2/Main" method="close"]
-[connection signal="dir_selected" from="MarginContainer/VBoxContainer2/CreateProj/DirDialog" to="MarginContainer/VBoxContainer2/CreateProj" method="onDirSelected"]
-[connection signal="file_selected" from="MarginContainer/VBoxContainer2/CreateProj/RomDialog" to="MarginContainer/VBoxContainer2/CreateProj" method="onRomSelected"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer2/CreateProj/RomDialogBtn" to="MarginContainer/VBoxContainer2/CreateProj" method="openRomDialog"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer2/CreateProj/CreateBtn" to="MarginContainer/VBoxContainer2/CreateProj" method="openDirDialog"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer2/CreateProj/BackBtn" to="MarginContainer/VBoxContainer2/CreateProj" method="close"]
-[connection signal="pressed" from="MarginContainer/VBoxContainer2/CreateProj/BackBtn" to="MarginContainer/VBoxContainer2/Main" method="open"]
+[connection signal="dir_selected" from="ColorRect/Main/DirDialog" to="ColorRect/Main" method="onDirSelected"]
+[connection signal="pressed" from="ColorRect/Main/NewBtn" to="ColorRect/Main" method="close"]
+[connection signal="pressed" from="ColorRect/Main/NewBtn" to="ColorRect/CreateProj" method="open"]
+[connection signal="pressed" from="ColorRect/Main/OpenBtn" to="ColorRect/Main" method="openDirDialog"]
+[connection signal="dir_selected" from="ColorRect/CreateProj/DirDialog" to="ColorRect/CreateProj" method="onDirSelected"]
+[connection signal="file_selected" from="ColorRect/CreateProj/RomDialog" to="ColorRect/CreateProj" method="onRomSelected"]
+[connection signal="pressed" from="ColorRect/CreateProj/RomDialogBtn" to="ColorRect/CreateProj" method="openRomDialog"]
+[connection signal="pressed" from="ColorRect/CreateProj/CreateBtn" to="ColorRect/CreateProj" method="openDirDialog"]
+[connection signal="pressed" from="ColorRect/CreateProj/BackBtn" to="ColorRect/Main" method="open"]
+[connection signal="pressed" from="ColorRect/CreateProj/BackBtn" to="ColorRect/CreateProj" method="close"]

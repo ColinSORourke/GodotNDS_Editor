@@ -91,9 +91,13 @@ func extractROM(romPath: String, dirPath: String) -> void:
 		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("banner.bin"), 7)
 		tmpWriter.store_buffer(romFile.get_buffer(0x840))
 		tmpWriter.close()
+	
+	ProjManager.ProjHeader = header
+	ProjManager.HeaderPath = dirPath.path_join("header.bin")
+	ProjManager.ProjRoot = root
+	ProjManager.RootPath = dirPath.path_join("data")
 		
 	romFile.close()
-	pass
 
 # Rebuild ROM from extracted Database
 func buildROM(dirPath: String, romPath: String) -> void:
@@ -241,6 +245,23 @@ func buildROM(dirPath: String, romPath: String) -> void:
 		reader.close()
 	
 
+func openUnpacked(dirPath: String) -> void:
+	var overlays: PackedStringArray = DirAccess.open(dirPath.path_join("overlays")).get_files()
+	if (overlays == null):
+		overlays = []
+	
+	var rootDir: NitroDirectory = NitroDirectory.new("data", 0xf000, null)
+	NitroDirectory.openDirA(dirPath.path_join("data"), rootDir, 0xf000, overlays.size())
+	
+	var reader = FileAccess.open(dirPath.path_join("header.bin"), FileAccess.READ)
+	var header: NitroHeader = NitroHeader.readHeader(reader)
+	reader.close()
+	
+	ProjManager.ProjHeader = header
+	ProjManager.HeaderPath = dirPath.path_join("header.bin")
+	ProjManager.ProjRoot = rootDir
+	ProjManager.RootPath = dirPath.path_join("data")
+
 # Utility Function
 func addPadding(offset: int) -> int:
 	if (offset % 4 != 0):
@@ -255,7 +276,6 @@ func getFileSize(path: String) -> int:
 	tmp.close()
 	return size;
 		
-
 # Nitro Classes representing main files in a rom.
 class NitroHeader:
 	static var headerValues = ["gameTitle", "gameCode", "makerCode", "unitCode", "encryptionSeedSelect", "deviceCapacity", "reserved1", "dsiFlags", "ndsRegion", "romVersion", "autoStart", "arm9RomOffset", "arm9EntryAddress", "arm9RamAddress", "arm9Size", "arm7RomOffset", "arm7EntryAddress", "Arm7RamAddress", "arm7Size", "fntOffset", "fntSize", "fatOffset", "fatSize", "arm9OverlayOffset", "arm9OverlaySize", "arm7OverlayOffset", "arm7OverlaySize", "port40001A4hNormalCommand", "port40001A4hKey1Command", "iconOffset", "secureAreaChecksum", "secureAreaDelay", "arm9AutoLoad", "arm7AutoLoad", "secureAreaDisable", "usedRomSize", "headerSize", "reserved2", "reserved3", "logo", "logoChecksum", "headerChecksum", "debugRomOffset", "debugSize", "reserved4", "reserved5"]
@@ -445,8 +465,6 @@ class NitroHeader:
 		romFile.store_32(header.reserved4);
 		romFile.store_buffer(header.reserved5);
 
-		pass
-
 	static func updateHeaderChecksum(header: NitroHeader) -> void:
 		var tmpHeader: PackedByteArray
 		tmpHeader.resize(0x8000)
@@ -563,7 +581,6 @@ class NitroHeader:
 		header.logoChecksum = CRC.calculateCRC(tmpHeader.slice(0xc0, 0x15c))
 		header.secureAreaChecksum = CRC.calculateCRC(tmpHeader.slice(header.arm9RomOffset, 0x8000 - header.arm9RomOffset))
 		tmpHeader.clear()
-		pass
 
 	static func compareHeader(headerA: NitroHeader, headerB: NitroHeader):
 		var i = 0
@@ -576,10 +593,10 @@ class NitroHeader:
 				print("A: " + str(aValue))
 				print("B: " + str(bValue))
 			i += 1
-		pass
 
 class NitroParent:
 	var name: String
+	var path: String
 
 class NitroDirectory extends NitroParent: 
 	var id: int
@@ -598,6 +615,10 @@ class NitroDirectory extends NitroParent:
 	static var currentOffset: int
 		
 	func _init(n: String, i: int, p: NitroDirectory):
+		if (p != null):
+			path = p.path.path_join(n)
+		else:
+			path = n
 		name = n
 		id = i
 		parent = p
@@ -630,7 +651,36 @@ class NitroDirectory extends NitroParent:
 			header = stream.get_8()
 		
 		stream.seek(position)
-		pass
+		
+	static func openDirA(currPath: String, p: NitroDirectory, currDirId: int, firstFileId: int) -> void:
+		NitroDirectory.currentDirId = currDirId
+		NitroDirectory.fileId = firstFileId
+		openDirB(currPath, p)
+		NitroDirectory.zeroOutStatics()
+		
+	static func openDirB(currPath: String, p: NitroDirectory) -> void:
+		var currDir = DirAccess.open(currPath)
+		var dirList = currDir.get_directories()
+		var files = currDir.get_files()
+		if (!dirList.is_empty()):
+			var i = 0
+			while (i < dirList.size()):
+				NitroDirectory.currentDirId += 1
+				var newDir: NitroDirectory = NitroDirectory.new(dirList[i], NitroDirectory.currentDirId, p)
+				p.directoryList.append(newDir)
+				openDirB(currPath.path_join(dirList[i]), newDir)
+				i += 1
+		
+		if (!files.is_empty()):
+			files.sort()
+			var i = 0
+			while (i < files.size()):
+				var temp = FileAccess.open(currPath.path_join(files[i]), FileAccess.READ)
+				var size: int = temp.get_length()
+				temp.close()
+				p.fileList.append(NitroFile.new(files[i], NitroDirectory.fileId, -1, size, p))
+				fileId += 1
+				i += 1
 		
 	static func loadDirA(currPath: String, p: NitroDirectory, currDirId: int, firstFileId: int, currOffset: int) -> void:
 		NitroDirectory.currentDirId = currDirId
@@ -639,12 +689,7 @@ class NitroDirectory extends NitroParent:
 			currOffset += (4 - (currOffset % 4))
 		NitroDirectory.currentOffset = currOffset
 		loadDirB(currPath, p)
-		
-	static func sortNameAscending(a: NitroParent, b: NitroParent) -> bool:
-		if (a.name.nocasecmp_to(b.name)):
-			return false;
-		else:
-			return true
+		NitroDirectory.zeroOutStatics()
 		
 	static func loadDirB(currPath: String, p: NitroDirectory) -> void:
 		var currDir = DirAccess.open(currPath)
@@ -660,7 +705,7 @@ class NitroDirectory extends NitroParent:
 				loadDirB(currPath.path_join(dirList[i]), newDir)
 				
 				i += 1
-		
+				
 		if (!files.is_empty()):
 			files.sort()
 			var i = 0
@@ -674,7 +719,12 @@ class NitroDirectory extends NitroParent:
 				if (currentOffset % 4 != 0):
 					currentOffset += (4 - (currentOffset % 4))
 				i += 1
-		pass
+		
+	static func sortNameAscending(a: NitroParent, b: NitroParent) -> bool:
+		if (a.name.nocasecmp_to(b.name)):
+			return false;
+		else:
+			return true
 		
 	static func unpackFileTree(romFile: FileAccess, currPath: String, rootDir: NitroDirectory) -> void:
 		var i: int = 0
@@ -694,7 +744,6 @@ class NitroDirectory extends NitroParent:
 				newFile.store_buffer(romFile.get_buffer(f.size))
 				newFile.close()
 			i += 1
-		pass
 		
 	static func repackFileTree(romFile: FileAccess, currPath: String, rootDir: NitroDirectory) -> void:
 		var i: int = 0
@@ -718,6 +767,11 @@ class NitroDirectory extends NitroParent:
 				# FILE DOES NOT EXIST
 				pass
 			i += 1
+	
+	static func zeroOutStatics() -> void:
+		fileId = 0
+		currentDirId = 0
+		currentOffset = 0
 
 class NitroFile extends NitroParent:
 	var id: int
@@ -731,6 +785,10 @@ class NitroFile extends NitroParent:
 		size = s
 		name = n
 		parent = p
+		if (p != null):
+			path = p.path.path_join(n)
+		else:
+			path = n
 	
 	func toString() -> String:
 		return "NitroFile{Name:" + name + " Id:" + str(id) + "}"

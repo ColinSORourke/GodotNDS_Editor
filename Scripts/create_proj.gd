@@ -1,6 +1,5 @@
 extends VBoxContainer
 
-
 var path = ""
 
 var rom = ""
@@ -35,16 +34,15 @@ func openDirDialog() -> void:
 		$AcceptDialog.visible = true
 	else:
 		$DirDialog.visible = true
-	
 
-func onDirSelected(selected):
-	if (DirAccess.dir_exists_absolute(selected.path_join($NameEdit.text))):
+func onDirSelected(dir: String):
+	if (DirAccess.dir_exists_absolute(dir.path_join($NameEdit.text))):
 		$AcceptDialog.dialog_text = "A folder with that name already exists!"
 		$AcceptDialog.visible = true
 	else:
-		path = selected;
+		path = dir;
+		
 		createProject()
-	
 
 func createProject() -> void:
 	var dir = DirAccess.open(path)
@@ -55,6 +53,8 @@ func createProject() -> void:
 	# SOMETIME IN THE FUTURE
 	# This should be in a "Try Catch" loop
 	NdsGd.extractROM(rom, projectPath.path_join("/unpacked"))
+
+	ProjManager.ProjName = $NameEdit.text
+	ProjManager.ProjPath = projectPath
 	
-	var file = FileAccess.open(projectPath + "/Project.TXT", 7)
-	file.close()
+	get_tree().change_scene_to_file("res://Scenes/ProjectView.tscn")

@@ -11,3 +11,10 @@ func decompressArm9() -> void:
 
 func recompressArm9() -> void:
 	ProjManager.recompArm9()
+
+func _on_tree_narc_selected(narcPath: String) -> void:
+	ProjManager.loadNarc(narcPath)
+	$NarcPanel.activate(ProjManager.NarcPath)
+
+func exportSubFile(fileName: String, fileContents: PackedByteArray) -> void:
+	ProjManager.exportFile(fileName, fileContents)

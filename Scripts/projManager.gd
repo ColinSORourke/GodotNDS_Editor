@@ -18,4 +18,19 @@ func recompArm9() -> void:
 	Compression.Compress(ProjPath.path_join("unpacked/arm9decomp.bin"), ProjPath.path_join("unpacked/arm9recomp.bin"), true)
 
 func loadNarc(path: String) -> void:
+	print("Opened Narc " + path)
 	NarcPath = ProjPath.path_join("unpacked").path_join(path)
+
+func exportFile(name: String, contents: PackedByteArray) -> void:
+	if (!FileAccess.file_exists(ProjPath.path_join("exported"))):
+		DirAccess.make_dir_absolute(ProjPath.path_join("exported"))
+		
+	var exportName = ProjPath.path_join("exported").path_join(name)
+	var i = 0
+	while(FileAccess.file_exists(exportName)):
+		var extraName = name.get_basename() + "_" + str(i) + "." + name.get_extension()
+		exportName = ProjPath.path_join("exported").path_join(extraName)
+		i += 1
+	var myFile = FileAccess.open(exportName, FileAccess.WRITE)
+	myFile.store_buffer(contents)
+	myFile.close()

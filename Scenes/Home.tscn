@@ -98,8 +98,11 @@ script = ExtResource("2_ioxfu")
 [node name="AcceptDialog" type="AcceptDialog" parent="ColorRect/Main"]
 auto_translate_mode = 1
 initial_position = 1
-size = Vector2i(400, 200)
+size = Vector2i(988, 200)
+transient = false
 unresizable = true
+always_on_top = true
+popup_window = true
 force_native = true
 theme = ExtResource("2_ksiif")
 theme_override_styles/panel = SubResource("StyleBoxFlat_vpi5q")
@@ -108,7 +111,7 @@ dialog_text = "This is a descriptive error message!"
 [node name="DirDialog" type="FileDialog" parent="ColorRect/Main"]
 auto_translate_mode = 1
 title = "Open a Directory"
-size = Vector2i(303, 180)
+size = Vector2i(342, 180)
 ok_button_text = "Select Current Folder"
 dialog_hide_on_ok = true
 file_mode = 2
@@ -156,8 +159,11 @@ script = ExtResource("2_qxyfr")
 
 [node name="AcceptDialog" type="AcceptDialog" parent="ColorRect/CreateProj"]
 initial_position = 1
-size = Vector2i(400, 200)
+size = Vector2i(988, 200)
+transient = false
 unresizable = true
+always_on_top = true
+popup_window = true
 force_native = true
 theme = ExtResource("2_ksiif")
 theme_override_styles/panel = SubResource("StyleBoxFlat_vpi5q")

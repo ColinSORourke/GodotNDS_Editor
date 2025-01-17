@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://bh1iuhvtvdnpg"]
+[gd_scene load_steps=13 format=3 uid="uid://bh1iuhvtvdnpg"]
 
 [ext_resource type="Script" path="res://Scripts/ProjectViewScene.gd" id="1_7jn5s"]
 [ext_resource type="Texture2D" uid="uid://b2kpqy7l0eoni" path="res://Assets/icon.svg" id="1_x08yx"]
@@ -6,8 +6,9 @@
 [ext_resource type="Theme" uid="uid://08hv88tc1qqh" path="res://Fonts/ApfelTheme.tres" id="3_6eryf"]
 [ext_resource type="StyleBox" uid="uid://co1mcfxjjtg57" path="res://Assets/buttonSBoxClick.tres" id="4_snj14"]
 [ext_resource type="StyleBox" uid="uid://jjq6i5iwgye" path="res://Assets/buttonSBoxNorm.tres" id="5_2bcqt"]
-[ext_resource type="Script" path="res://Scripts/FilePanel.gd" id="7_b3xh0"]
-[ext_resource type="Script" path="res://Scripts/NarcPanel.gd" id="8_yjs0q"]
+[ext_resource type="Script" path="res://Scripts/FileTree.gd" id="7_b3xh0"]
+[ext_resource type="Script" path="res://Scripts/NarcTree.gd" id="8_yjs0q"]
+[ext_resource type="Script" path="res://Scripts/FilePanel.gd" id="9_oi2nf"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wcq0y"]
 border_width_left = 3
@@ -21,7 +22,7 @@ corner_radius_bottom_left = 8
 expand_margin_left = 8.0
 expand_margin_right = 8.0
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1pmh2"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7q7v1"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hu1ev"]
 
@@ -161,55 +162,82 @@ theme = ExtResource("3_6eryf")
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 30
-theme_override_styles/panel = SubResource("StyleBoxFlat_1pmh2")
+theme_override_styles/panel = SubResource("StyleBoxFlat_7q7v1")
 allow_search = false
 hide_root = true
 scroll_horizontal_enabled = false
 script = ExtResource("7_b3xh0")
 
-[node name="NarcPanel" type="Panel" parent="."]
+[node name="NarcList" type="Label" parent="."]
+visible = false
+layout_mode = 1
+offset_left = 64.0
+offset_top = 216.0
+offset_right = 313.0
+offset_bottom = 283.0
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_wcq0y")
+text = "Narc Name
+"
+script = ExtResource("8_yjs0q")
+
+[node name="ItemList" type="ItemList" parent="NarcList"]
+layout_mode = 0
+offset_top = 72.0
+offset_right = 225.0
+offset_bottom = 768.0
+theme_override_font_sizes/font_size = 20
+
+[node name="Cancel" type="Button" parent="NarcList"]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 776.0
+offset_right = 162.0
+offset_bottom = 816.0
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = ExtResource("5_2bcqt")
+theme_override_styles/pressed = ExtResource("4_snj14")
+theme_override_styles/normal = ExtResource("5_2bcqt")
+text = "Cancel
+"
+
+[node name="FilePanel" type="Panel" parent="."]
 visible = false
 layout_mode = 0
-offset_left = 352.0
+offset_left = 440.0
 offset_top = 232.0
-offset_right = 1352.0
+offset_right = 1440.0
 offset_bottom = 1032.0
 theme = ExtResource("3_6eryf")
 theme_override_styles/panel = SubResource("StyleBoxFlat_hu1ev")
-script = ExtResource("8_yjs0q")
+script = ExtResource("9_oi2nf")
 
-[node name="Label2" type="Label" parent="NarcPanel"]
-visible = false
+[node name="FileName" type="Label" parent="FilePanel"]
 layout_mode = 1
-offset_left = 192.0
-offset_top = 80.0
-offset_right = 290.0
-offset_bottom = 160.0
+offset_left = 16.0
+offset_top = 8.0
+offset_right = 114.0
+offset_bottom = 88.0
 text = "File"
 
-[node name="Panel" type="Panel" parent="NarcPanel/Label2"]
+[node name="HexDisplay" type="TextEdit" parent="FilePanel"]
 layout_mode = 0
-offset_top = 72.0
-offset_right = 600.0
-offset_bottom = 672.0
-
-[node name="TextEdit" type="TextEdit" parent="NarcPanel/Label2/Panel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = 49.0
+offset_top = 95.0
+offset_right = 649.0
+offset_bottom = 695.0
 theme_override_font_sizes/font_size = 40
 text = "00 44 88 FF"
 editable = false
 
-[node name="Export" type="Button" parent="NarcPanel/Label2"]
+[node name="Export" type="Button" parent="FilePanel"]
 layout_mode = 1
-offset_left = 496.0
-offset_top = 32.0
-offset_right = 602.0
-offset_bottom = 72.0
+offset_left = 880.0
+offset_top = 16.0
+offset_right = 986.0
+offset_bottom = 56.0
 theme = ExtResource("3_6eryf")
 theme_override_font_sizes/font_size = 30
 theme_override_styles/hover = ExtResource("5_2bcqt")
@@ -218,29 +246,15 @@ theme_override_styles/normal = ExtResource("5_2bcqt")
 text = "Export
 "
 
-[node name="Label" type="Label" parent="NarcPanel"]
-layout_mode = 0
-offset_left = 16.0
-offset_top = 8.0
-offset_right = 326.0
-offset_bottom = 88.0
-text = "Narc Name
-"
-
-[node name="ItemList" type="ItemList" parent="NarcPanel"]
-layout_mode = 0
-offset_left = 23.0
-offset_top = 89.0
-offset_right = 173.0
-offset_bottom = 789.0
-theme_override_font_sizes/font_size = 20
-
 [connection signal="pressed" from="Back" to="." method="back"]
 [connection signal="pressed" from="Compile" to="." method="compile"]
 [connection signal="pressed" from="Decomp" to="." method="decompressArm9"]
 [connection signal="pressed" from="Recomp" to="." method="recompressArm9"]
 [connection signal="button_clicked" from="Tree" to="Tree" method="_on_button_clicked"]
 [connection signal="narcSelected" from="Tree" to="." method="_on_tree_narc_selected"]
-[connection signal="exportSubFile" from="NarcPanel" to="." method="exportSubFile"]
-[connection signal="pressed" from="NarcPanel/Label2/Export" to="NarcPanel" method="exportFile"]
-[connection signal="item_activated" from="NarcPanel/ItemList" to="NarcPanel" method="subfileSelected"]
+[connection signal="narc_file_selected" from="NarcList" to="FilePanel" method="activate"]
+[connection signal="item_activated" from="NarcList/ItemList" to="NarcList" method="narcFilePicked"]
+[connection signal="button_up" from="NarcList/Cancel" to="." method="showTree"]
+[connection signal="button_up" from="NarcList/Cancel" to="NarcList" method="cancel"]
+[connection signal="button_up" from="NarcList/Cancel" to="FilePanel" method="close"]
+[connection signal="pressed" from="FilePanel/Export" to="FilePanel" method="exportFile"]

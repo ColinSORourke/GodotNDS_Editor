@@ -1,0 +1,7 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://b4t5ys64v27ey"]
+
+[ext_resource type="FontFile" uid="uid://d4bweqw15kn8d" path="res://Fonts/Source_Code_Pro/SourceCodePro-VariableFont_wght.ttf" id="1_exlq1"]
+
+[resource]
+default_font = ExtResource("1_exlq1")
+default_font_size = 65

@@ -18,4 +18,4 @@ Detect and warn about various issues.
 Be able to decompress and work with de-compressed ARM9s & Overlays
 	Be able to detect if a file is decompressed.
 	Decompress files myself. (Maybe automatically)
-	Maybe automatically re-compress files when compiling a ROM.d
+	Maybe automatically re-compress files when compiling a ROM.

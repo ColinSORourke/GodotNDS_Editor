@@ -1,9 +1,5 @@
 extends VBoxContainer
 
-func _ready() -> void:
-
-	pass
-
 func close() -> void:
 	self.visible = false
 
@@ -20,6 +16,8 @@ func onDirSelected(selected: String) -> void:
 			NdsGd.openUnpacked(lookingFor)
 			ProjManager.ProjName = selected.get_slice("/", selected.get_slice_count("/") - 1)
 			ProjManager.ProjPath = selected
+			ProjManager.iscompArm9()
+			ProjManager.overlaysCompressed()
 			get_tree().change_scene_to_file("res://Scenes/ProjectView.tscn")
 		else:
 			$AcceptDialog.dialog_text = "The 'unpacked' Folder does not contain an unpacked ROM"

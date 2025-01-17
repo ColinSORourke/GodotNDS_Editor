@@ -1,14 +1,16 @@
 extends Node
 
-# This code is a port of JackHack96's awesome jNndstool to GDScript.
-# https://github.com/JackHack96/jNdstool
+# MUCH OF THIS CODE IS NOT MY OWN ALGORITHMS
+# This is a port of a lot of excellent algorithms written by other cool people!
+# Including:
+	# https://github.com/JackHack96/jNdstool
+	# https://github.com/VendorPC/NARCTool
 
-static var ExtractionLog: FileAccess
 
 # Main Extract Function
+# https://github.com/JackHack96/jNdstool/src/main/java/nitro/ROM.java
 func extractROM(romPath: String, dirPath: String) -> void:
 	var dir = DirAccess.open(dirPath)
-	
 	
 	var romFile: FileAccess = FileAccess.open(romPath, FileAccess.READ)
 	var root: NitroDirectory = NitroDirectory.new("data", 0xf000, null)
@@ -31,7 +33,6 @@ func extractROM(romPath: String, dirPath: String) -> void:
 	
 	dir.make_dir("data")
 	NitroDirectory.unpackFileTree(romFile, dirPath.path_join("data"), root)
-	
 	
 	dir.make_dir("overlays")
 	i = 0
@@ -79,7 +80,6 @@ func extractROM(romPath: String, dirPath: String) -> void:
 		tmpWriter.store_buffer(romFile.get_buffer(header.arm7Size))
 		tmpWriter.close()
 	
-	
 	if (!FileAccess.file_exists(dirPath.path_join("arm7ovltable.bin"))):
 		romFile.seek(header.arm7OverlayOffset)
 		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("arm7ovltable.bin"), 7)
@@ -100,6 +100,7 @@ func extractROM(romPath: String, dirPath: String) -> void:
 	romFile.close()
 
 # Rebuild ROM from extracted Database
+# https://github.com/JackHack96/jNdstool/src/main/java/nitro/ROM.java
 func buildROM(dirPath: String, romPath: String) -> void:
 	var haveAllFiles = true
 	
@@ -122,129 +123,127 @@ func buildROM(dirPath: String, romPath: String) -> void:
 		
 	if (!haveAllFiles):
 		print("Something has gone horribly wrong")
-	else: 
-		var romFile: FileAccess = FileAccess.open(romPath, FileAccess.WRITE_READ)
-		var reader: FileAccess
-		var overlays: PackedStringArray = DirAccess.open(dirPath.path_join("overlays")).get_files()
-		assert(overlays != null)
-		overlays.sort()
-		
-		var rootDir: NitroDirectory = NitroDirectory.new("data", 0xf000, null)
-		var fimgOffset: int = 0
-		fimgOffset += 0x4000
-		
-		fimgOffset += getFileSize(dirPath.path_join("arm9.bin"))
-		fimgOffset = addPadding(fimgOffset)
-
-		fimgOffset += getFileSize(dirPath.path_join("arm9ovltable.bin"))
-		fimgOffset = addPadding(fimgOffset)
-		var i = 0
-		while (i < overlays.size()):
-			fimgOffset += getFileSize(dirPath.path_join("overlays").path_join(overlays[i]))
-			fimgOffset = addPadding(fimgOffset)
-			i += 1
-		fimgOffset += getFileSize(dirPath.path_join("arm7.bin"))
-		fimgOffset = addPadding(fimgOffset)
-		fimgOffset += getFileSize(dirPath.path_join("arm7ovltable.bin"))
-		fimgOffset = addPadding(fimgOffset)
-		var fntSize = FNT.calculateFNTSize(dirPath.path_join("data"))
-		fimgOffset += fntSize
-		fimgOffset = addPadding(fimgOffset)
-		var fatSize = FAT.calculateFATSize(dirPath.path_join("data"))
-		fimgOffset += fatSize
-		fimgOffset = addPadding(fimgOffset)
-		
-		fimgOffset += overlays.size() * 8
-		fimgOffset = addPadding(fimgOffset)
-		fimgOffset += 0x840
-		
-		
-		NitroDirectory.loadDirA(dirPath.path_join("data"), rootDir, 0xf000, overlays.size(), fimgOffset)
-		
-		reader = FileAccess.open(dirPath.path_join("header.bin"), FileAccess.READ)
-		var header: NitroHeader = NitroHeader.readHeader(reader)
-		var h: PackedByteArray = PackedByteArray()
-		h.resize(0x4000)
-		romFile.store_buffer(h)
-		
-		reader = FileAccess.open(dirPath.path_join("arm9.bin"), FileAccess.READ)
-		header.arm9RomOffset = romFile.get_position()
-		header.arm9Size = reader.get_length()
-		romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("arm9.bin")))
-		while (romFile.get_position() % 4 != 0):
-			romFile.store_8(0xFF)
-			
-		reader = FileAccess.open(dirPath.path_join("arm9ovltable.bin"), FileAccess.READ)
-		header.arm9OverlayOffset = romFile.get_position()
-		header.arm9OverlaySize = reader.get_length()
-		romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("arm9ovltable.bin")))
-		while (romFile.get_position() % 4 != 0):
-			romFile.store_8(0xFF)
-			
-		var ovlStartOffsets: Array[int]
-		var ovlEndOffsets: Array[int]
-		
-		i = 0
-		while (i < header.arm9OverlaySize / 0x20):
-			reader = FileAccess.open(dirPath.path_join("overlays").path_join(overlays[i]), FileAccess.READ)
-			ovlStartOffsets.append(romFile.get_position())
-			ovlEndOffsets.append(romFile.get_position() + reader.get_length())
-			romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("overlays").path_join(overlays[i])))
-			while (romFile.get_position() % 4 != 0):
-				romFile.store_8(0xFF)
-			i += 1
-		
-		reader = FileAccess.open(dirPath.path_join("arm7.bin"), FileAccess.READ)
-		header.arm7RomOffset = romFile.get_position()
-		header.arm7Size = reader.get_length()
-		romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("arm7.bin")))
-		while (romFile.get_position() % 4 != 0):
-			romFile.store_8(0xFF)
-		
-		reader = FileAccess.open(dirPath.path_join("arm7ovltable.bin"), FileAccess.READ)
-		header.arm7OverlayOffset = romFile.get_position()
-		header.arm7OverlaySize = reader.get_length()
-		romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("arm7ovltable.bin")))
-		while (romFile.get_position() % 4 != 0):
-			romFile.store_8(0xFF)
-		
-		i = header.arm9OverlaySize / 0x20
-		while (i < header.arm9OverlaySize / 0x20 + header.arm7OverlaySize / 0x20):
-			reader = FileAccess.open(dirPath.path_join("overlays").path_join(overlays[i]), FileAccess.READ)
-			ovlStartOffsets.append(romFile.get_position())
-			ovlEndOffsets.append(romFile.get_position() + reader.get_length())
-			romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("overlays").path_join(overlays[i])))
-			while (romFile.get_position() % 4 != 0):
-				romFile.store_8(0xFF)
-			i += 1
-			
-		header.fntOffset = romFile.get_position()
-		FNT.writeFNT(romFile, rootDir)
-		header.fntSize = romFile.get_position() - header.fntOffset
-		while (romFile.get_position() % 4 != 0):
-			romFile.store_8(0xFF)
-		
-		header.fatOffset = romFile.get_position()
-		FAT.writeFAT(romFile, rootDir, ovlStartOffsets, ovlEndOffsets)
-		header.fatSize = romFile.get_position() - header.fatOffset
-		while (romFile.get_position() % 4 != 0):
-			romFile.store_8(0xFF)
-			
-		
-		header.iconOffset = romFile.get_position()
-		romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("banner.bin")))
-		
-		NitroDirectory.repackFileTree(romFile, dirPath.path_join("data"), rootDir)
-		
-		romFile.seek(0)
-		NitroHeader.updateHeaderChecksum(header)
-		NitroHeader.writeHeader(header, romFile)
-		
-		print("COMPILE COMPLETE?")
-		romFile.close()
-		reader.close()
+		return
 	
+	var romFile: FileAccess = FileAccess.open(romPath, FileAccess.WRITE_READ)
+	var reader: FileAccess
+	var overlays: PackedStringArray = DirAccess.open(dirPath.path_join("overlays")).get_files()
+	assert(overlays != null)
+	overlays.sort()
+	
+	var rootDir: NitroDirectory = NitroDirectory.new("data", 0xf000, null)
+	var fimgOffset: int = 0
+	fimgOffset += 0x4000
+	
+	fimgOffset += getFileSize(dirPath.path_join("arm9.bin"))
+	fimgOffset = addPadding(fimgOffset)
 
+	fimgOffset += getFileSize(dirPath.path_join("arm9ovltable.bin"))
+	fimgOffset = addPadding(fimgOffset)
+	var i = 0
+	while (i < overlays.size()):
+		fimgOffset += getFileSize(dirPath.path_join("overlays").path_join(overlays[i]))
+		fimgOffset = addPadding(fimgOffset)
+		i += 1
+	fimgOffset += getFileSize(dirPath.path_join("arm7.bin"))
+	fimgOffset = addPadding(fimgOffset)
+	fimgOffset += getFileSize(dirPath.path_join("arm7ovltable.bin"))
+	fimgOffset = addPadding(fimgOffset)
+	var fntSize = FNT.calculateFNTSize(dirPath.path_join("data"))
+	fimgOffset += fntSize
+	fimgOffset = addPadding(fimgOffset)
+	var fatSize = FAT.calculateFATSize(dirPath.path_join("data"))
+	fimgOffset += fatSize
+	fimgOffset = addPadding(fimgOffset)
+	
+	fimgOffset += overlays.size() * 8
+	fimgOffset = addPadding(fimgOffset)
+	fimgOffset += 0x840
+	
+	NitroDirectory.loadDirA(dirPath.path_join("data"), rootDir, 0xf000, overlays.size(), fimgOffset)
+	
+	reader = FileAccess.open(dirPath.path_join("header.bin"), FileAccess.READ)
+	var header: NitroHeader = NitroHeader.readHeader(reader)
+	var h: PackedByteArray = PackedByteArray()
+	h.resize(0x4000)
+	romFile.store_buffer(h)
+	
+	reader = FileAccess.open(dirPath.path_join("arm9.bin"), FileAccess.READ)
+	header.arm9RomOffset = romFile.get_position()
+	header.arm9Size = reader.get_length()
+	romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("arm9.bin")))
+	while (romFile.get_position() % 4 != 0):
+		romFile.store_8(0xFF)
+		
+	reader = FileAccess.open(dirPath.path_join("arm9ovltable.bin"), FileAccess.READ)
+	header.arm9OverlayOffset = romFile.get_position()
+	header.arm9OverlaySize = reader.get_length()
+	romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("arm9ovltable.bin")))
+	while (romFile.get_position() % 4 != 0):
+		romFile.store_8(0xFF)
+		
+	var ovlStartOffsets: Array[int]
+	var ovlEndOffsets: Array[int]
+	
+	i = 0
+	while (i < header.arm9OverlaySize / 0x20):
+		reader = FileAccess.open(dirPath.path_join("overlays").path_join(overlays[i]), FileAccess.READ)
+		ovlStartOffsets.append(romFile.get_position())
+		ovlEndOffsets.append(romFile.get_position() + reader.get_length())
+		romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("overlays").path_join(overlays[i])))
+		while (romFile.get_position() % 4 != 0):
+			romFile.store_8(0xFF)
+		i += 1
+	
+	reader = FileAccess.open(dirPath.path_join("arm7.bin"), FileAccess.READ)
+	header.arm7RomOffset = romFile.get_position()
+	header.arm7Size = reader.get_length()
+	romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("arm7.bin")))
+	while (romFile.get_position() % 4 != 0):
+		romFile.store_8(0xFF)
+	
+	reader = FileAccess.open(dirPath.path_join("arm7ovltable.bin"), FileAccess.READ)
+	header.arm7OverlayOffset = romFile.get_position()
+	header.arm7OverlaySize = reader.get_length()
+	romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("arm7ovltable.bin")))
+	while (romFile.get_position() % 4 != 0):
+		romFile.store_8(0xFF)
+	
+	i = header.arm9OverlaySize / 0x20
+	while (i < header.arm9OverlaySize / 0x20 + header.arm7OverlaySize / 0x20):
+		reader = FileAccess.open(dirPath.path_join("overlays").path_join(overlays[i]), FileAccess.READ)
+		ovlStartOffsets.append(romFile.get_position())
+		ovlEndOffsets.append(romFile.get_position() + reader.get_length())
+		romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("overlays").path_join(overlays[i])))
+		while (romFile.get_position() % 4 != 0):
+			romFile.store_8(0xFF)
+		i += 1
+		
+	header.fntOffset = romFile.get_position()
+	FNT.writeFNT(romFile, rootDir)
+	header.fntSize = romFile.get_position() - header.fntOffset
+	while (romFile.get_position() % 4 != 0):
+		romFile.store_8(0xFF)
+	
+	header.fatOffset = romFile.get_position()
+	FAT.writeFAT(romFile, rootDir, ovlStartOffsets, ovlEndOffsets)
+	header.fatSize = romFile.get_position() - header.fatOffset
+	while (romFile.get_position() % 4 != 0):
+		romFile.store_8(0xFF)
+	
+	header.iconOffset = romFile.get_position()
+	romFile.store_buffer(FileAccess.get_file_as_bytes(dirPath.path_join("banner.bin")))
+	
+	NitroDirectory.repackFileTree(romFile, dirPath.path_join("data"), rootDir)
+	
+	romFile.seek(0)
+	NitroHeader.updateHeaderChecksum(header)
+	NitroHeader.writeHeader(header, romFile)
+	
+	romFile.close()
+	reader.close()
+	
+# Build necessary variables to represent the ROM from an Unpacked ROM folder.
 func openUnpacked(dirPath: String) -> void:
 	var overlays: PackedStringArray = DirAccess.open(dirPath.path_join("overlays")).get_files()
 	if (overlays == null):
@@ -263,6 +262,7 @@ func openUnpacked(dirPath: String) -> void:
 	ProjManager.RootPath = dirPath.path_join("data")
 
 # Utility Function
+# https://github.com/JackHack96/jNdstool/src/main/java/nitro/ROM.java
 func addPadding(offset: int) -> int:
 	if (offset % 4 != 0):
 		return offset + (4 - offset % 4)
@@ -276,7 +276,12 @@ func getFileSize(path: String) -> int:
 	tmp.close()
 	return size;
 		
+#################
 # Nitro Classes representing main files in a rom.
+#################
+
+# Nitro Header
+# https://github.com/JackHack96/jNdstool/src/main/java/nitro/NitroHeader.java
 class NitroHeader:
 	static var headerValues = ["gameTitle", "gameCode", "makerCode", "unitCode", "encryptionSeedSelect", "deviceCapacity", "reserved1", "dsiFlags", "ndsRegion", "romVersion", "autoStart", "arm9RomOffset", "arm9EntryAddress", "arm9RamAddress", "arm9Size", "arm7RomOffset", "arm7EntryAddress", "Arm7RamAddress", "arm7Size", "fntOffset", "fntSize", "fatOffset", "fatSize", "arm9OverlayOffset", "arm9OverlaySize", "arm7OverlayOffset", "arm7OverlaySize", "port40001A4hNormalCommand", "port40001A4hKey1Command", "iconOffset", "secureAreaChecksum", "secureAreaDelay", "arm9AutoLoad", "arm7AutoLoad", "secureAreaDisable", "usedRomSize", "headerSize", "reserved2", "reserved3", "logo", "logoChecksum", "headerChecksum", "debugRomOffset", "debugSize", "reserved4", "reserved5"]
 	
@@ -594,10 +599,13 @@ class NitroHeader:
 				print("B: " + str(bValue))
 			i += 1
 
+# Parent for Directories & Files, allowing me to treat them interchangeably in some places
 class NitroParent:
 	var name: String
 	var path: String
 
+# Nitro Directory
+# https://github.com/JackHack96/jNdstool/src/main/java/nitro/NitroDirectory.java
 class NitroDirectory extends NitroParent: 
 	var id: int
 	var parent: NitroDirectory
@@ -773,6 +781,8 @@ class NitroDirectory extends NitroParent:
 		currentDirId = 0
 		currentOffset = 0
 
+# Nitro File
+# https://github.com/JackHack96/jNdstool/src/main/java/nitro/NitroFile.java
 class NitroFile extends NitroParent:
 	var id: int
 	var offset: int
@@ -793,6 +803,8 @@ class NitroFile extends NitroParent:
 	func toString() -> String:
 		return "NitroFile{Name:" + name + " Id:" + str(id) + "}"
 
+# Nitro File
+# https://github.com/JackHack96/jNdstool/src/main/java/nitro/NitroOverlay.java
 class NitroOverLay:
 	var id: int
 	var ramAddress: int
@@ -805,6 +817,8 @@ class NitroOverLay:
 	var startOffset: int
 	var endOffset: int
 
+# File Name Table
+# https://github.com/JackHack96/jNdstool/src/main/java/nitro/FNT.java
 class FNT:
 	static var subByteOffset: int
 	static var mainByteOffset: int
@@ -947,6 +961,8 @@ class FNT:
 		else:
 			return a
 
+# File Allocation Table
+# https://github.com/JackHack96/jNdstool/src/main/java/nitro/FAT.java
 class FAT:
 	static func writeFAT(romFile: FileAccess, rootDir: NitroDirectory, ovlStartOffsets: Array[int], ovlEndOffsets: Array[int]) -> void:
 		if (rootDir.id == 0xf000):
@@ -980,7 +996,16 @@ class FAT:
 		else:
 			return 0;
 
+# NARC File Unpacked
+# https://github.com/VendorPC/NARCTool/blob/master/0.4/backend/NARC.py
 class NitroArchive:
+	static func isNarc(bytes: PackedByteArray) -> bool:
+		if (bytes.decode_u32(0) not in magicDict || magicDict[bytes.decode_u32(0)] != "NARC"):
+			print("Not a NARC")
+			# NOT A NARC FILE
+			return false
+		return true
+	
 	# Hex Codes -> File Extensions
 	const extensionDict: Dictionary = {
 		0x424D4430 : ".bmd0",
@@ -1065,12 +1090,20 @@ class NitroArchive:
 	class fntBlock:
 		var magic: int
 		var sectionSize: int
-		var offsets: Array[Vector2i] = []
+		var firstOffsets: Array[int] = []
 		var dirStartOffset: int
 		var firstFilePos: int
 		var nDir: int
 		var names: PackedStringArray = []
 		const bufferLength: int = 8
+		
+		# Packing Nested Directory Variables into these arrays
+			# firstOffsets = subDirectories[x][0]
+			# firstFilePos = subDirectories[x][1]
+			# parentDir = subDirectories[x][2]
+			# sizeNames = subDirectories[x][3]
+			# dirNums = subDirectories[x][4]
+		var subDirectories: Array[Array] = []
 		
 		func process(bytes: PackedByteArray):
 			magic = bytes.decode_u32(0)
@@ -1081,12 +1114,29 @@ class NitroArchive:
 			firstFilePos = bytes.decode_u16(4)
 			nDir = bytes.decode_u16(6)
 			if (nDir != 1):
-				# more complicated stuff
-				pass
+				var currPos = 8
+				var i = 0
+				while (i < nDir):
+					# UNTESTED CODE TO HANDLE NARCS WITH NESTED DIRECTORIES
+					subDirectories.append([0,0,0,0,0])
+					subDirectories[i][0] = bytes.decode_u32(currPos)
+					subDirectories[i][1] = bytes.decode_u16(currPos + 4)
+					subDirectories[i][2] = bytes.decode_u16(currPos + 6)
+					var byte = bytes.decode_u8(currPos + 8)
+					subDirectories[i][3] = byte
+					if (byte == 0x00):
+						names.append(str(i + 1))
+						currPos += 9
+					else:
+						names.append(bytes.slice(currPos + 9, currPos + 9 + byte).get_string_from_utf8())
+						currPos += 9 + byte
+					subDirectories[i][4] = bytes.decode_u16(currPos)
+					currPos += 2
+					i += 1
 			else:
 				var i = 0
 				while (i < numFiles):
-					names.append(str(i))
+					names.append(str(i + 1))
 					i += 1
 	
 	# Unpack the NARC
@@ -1166,7 +1216,77 @@ class NitroArchive:
 
 		return 0
 
+	func pack(path: String, overwrite: bool) -> void:
+		var target: FileAccess
+		if (!overwrite):
+			target = FileAccess.open(path.get_basename() + "packed." + path.get_extension(), FileAccess.WRITE)
+		else:
+			target = FileAccess.open(path, FileAccess.WRITE)
+		
+		target.store_32(0x4352414E) # "NARC"
+		target.store_32(0x0100FFFE)
+		
+		var fimgData: PackedByteArray = []
+		var fileSizes: Array[int] = []
+		var i = 0
+		while (i < files.size()):
+			fileSizes.append(files[i].size())
+			fimgData.append_array(files[i])
+			while (fimgData.size() % 4 != 0):
+				fimgData.append(0xFF)
+			i += 1
+		
+		var size:int = 12 + (8 * fileSizes.size()) + 16 + 8 + fimgData.size()
+		
+		target.store_32(size + 16)
+		target.store_16(0x10)
+		target.store_16(0x3)
+		
+		target.store_32(0x46415442) # "FATB
+		target.store_32(0x4 + 0x4 + 0x4 + (0x8 * fileSizes.size()))
+		target.store_32(fileSizes.size())
+		i = 0
+		var currOffset = 0
+		while(i < fileSizes.size()):
+			target.store_32(currOffset)
+			target.store_32(currOffset + fileSizes[i])
+			currOffset += fileSizes[i]
+			while (currOffset % 4 != 0):
+				currOffset += 1
+			i += 1
+		
+		target.store_32(0x464E5442) # "FNTB"
+		target.store_32(0x10)
+		target.store_32(0x4)
+		target.store_16(0x0)
+		target.store_16(0x1)
+
+		target.store_32(0x46494D47) # "FIMG"
+		target.store_32(fimgData.size() + 8)
+		target.store_buffer(fimgData)
+
+	func duplicate(index: int) -> void:
+		files.append(files[index])
+		myHeader.fileSize += files[index].size() + 8
+		fatbSectionSize += 8
+		fatbNFiles += 1
+		var prevEnd = fatbOffsets[fatbOffsets.size() - 1][1]
+		fatbOffsets.append(Vector2i(prevEnd, prevEnd + files[index].size()))
+		fimgSectionSize += files[index].size()
+		if (myFntb.nDir != 1):
+			myFntb.subDirectories.append(myFntb.subDirectories[index])
+			myFntb.subDirectories[myFntb.subDirectories.size() - 1][3] += 2
+			myFntb.sectionSize += myFntb.subDirectores[myFntb.subDirectories.size() - 1][3]
+		var extension = "." + myFntb.names[index].get_extension()
+		if (myFntb.names[index].get_extension() == ""):
+			extension = ""
+		if (!myFntb.names[index].get_basename().is_valid_int()):
+			myFntb.names.append(myFntb.names[index].get_basename() + "cp" + extension)
+		else:
+			myFntb.names.append(str(files.size()) + extension)
+
 #########
+# Checksum Calculation
 # https://github.com/snksoft/java-crc/blob/master/src/main/java/com/github/snksoft/crc/CRC.java
 #########
 class CRC:

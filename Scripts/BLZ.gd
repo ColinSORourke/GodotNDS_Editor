@@ -1,14 +1,19 @@
 extends Node
 
+# MUCH OF THIS CODE IS NOT MY OWN ALGORITHMS
+# This is a port of a lot of excellent algorithms written by other cool people!
+# Including:
+	# https://github.com/RoadrunnerWMC/ndspy
+	# https://github.com/turtleisaac/Nds4j
+
 # Algorithm taken from NDS4J/CodeCompression
-static func Decompress(file: String) -> void:
+static func Decompress(file: String, overwrite: bool) -> void:
 	var reader: FileAccess = FileAccess.open(file, FileAccess.READ)
-	
-	var target: FileAccess = FileAccess.open(file.get_basename() + "decomp." + file.get_extension(), 7)
 	
 	var appendedDataAmt: int = detectAppendedData(reader)
 	
 	if (appendedDataAmt == -1):
+		reader.close()
 		return
 	
 	var dataSize: int = reader.get_length()
@@ -50,8 +55,6 @@ static func Decompress(file: String) -> void:
 	var passThruLength: int = dataSize - compressedLength
 	reader.seek(0)
 	var passThruData: PackedByteArray = reader.get_buffer(passThruLength)
-	target.seek(0)
-	target.store_buffer(passThruData)
 	
 	var compressedData: PackedByteArray = reader.get_buffer(compressedLength - headerLength)
 	var decompressedData: PackedByteArray = PackedByteArray()
@@ -111,17 +114,24 @@ static func Decompress(file: String) -> void:
 			readBytes += 1
 			decompressedData[decompressedData.size() - 1 - currentOutSize] = next
 			currentOutSize += 1
-			
 	
-	target.store_buffer(decompressedData)
-	target.store_buffer(appendedData)
+	if (!overwrite):
+		reader.close()
+		reader = FileAccess.open(file.get_basename() + "decomp." + file.get_extension(), FileAccess.WRITE_READ)
+	else:
+		reader.close()
+		reader = FileAccess.open(file, FileAccess.WRITE)
+	
+	reader.seek(0)
+	reader.store_buffer(passThruData)
+	reader.store_buffer(decompressedData)
+	reader.store_buffer(appendedData)
 	
 # Algorithm taken from NDSPY/CodeCompression
-static func Compress(fileFrom: String, fileTo: String, arm9: bool = false) -> void:
-	var target = FileAccess.open(fileTo, FileAccess.WRITE)
-	var buffer = FileAccess.get_file_as_bytes(fileFrom)
+static func Compress(fileFrom: String, overwrite: bool, arm9: bool = false) -> void:
+	var buffer: PackedByteArray = FileAccess.get_file_as_bytes(fileFrom)
 	
-	var prefix
+	var prefix = PackedByteArray()
 	if (arm9):
 		prefix = buffer.slice(0, 0x4000)
 		buffer = buffer.slice(0x4000)
@@ -130,13 +140,8 @@ static func Compress(fileFrom: String, fileTo: String, arm9: bool = false) -> vo
 	buffer.reverse()
 	
 	var myLZ = LZCompress.new(buffer)
-	
-	#var start = Time.get_unix_time_from_system() * 1000
-	#print("Started Compression at: " + str(start) + " unix Time")
+
 	var compResults = myLZ.compress(3, 0x1002, 18, true)
-	#var end = Time.get_unix_time_from_system() * 1000
-	#print("Ended Compression at: " + str(end) + " unix time")
-	#print("Compression took " + str((end - start)/1000.0) + " seconds") 
 	var compressedBuff = compResults[0]
 	var ignorableD = compResults[1]
 	var ignorableC = compResults[2]
@@ -144,8 +149,15 @@ static func Compress(fileFrom: String, fileTo: String, arm9: bool = false) -> vo
 	if (not compressedBuff or (buffer.size() - 4 < ( (compressedBuff.size() + 3) & ~4)  + 8) ):
 		print("Compressed size too large")
 		compressedBuff = buffer
-		while (compressedBuff.size() % 4 == 0):
+		compressedBuff.reverse()
+		while (compressedBuff.size() % 4 != 0):
 			compressedBuff.append(0x00)
+			
+		var target: FileAccess
+		if (!overwrite):
+			target = FileAccess.open(fileFrom.get_basename() + "compressed." + fileFrom.get_extension(), FileAccess.WRITE)
+		else:
+			target = FileAccess.open(fileFrom, FileAccess.WRITE)
 		target.store_buffer(compressedBuff)
 		target.close()
 	else:
@@ -166,9 +178,24 @@ static func Compress(fileFrom: String, fileTo: String, arm9: bool = false) -> vo
 		compressedBuff[ptr + 3] = headerLen
 		compressedBuff.encode_u32(ptr + 4, extraLen - headerLen)
 		
+		var target: FileAccess
+		if (!overwrite):
+			target = FileAccess.open(fileFrom.get_basename() + "compressed." + fileFrom.get_extension(), FileAccess.WRITE)
+		else:
+			target = FileAccess.open(fileFrom, FileAccess.WRITE)
+		
 		target.store_buffer(prefix)
 		target.store_buffer(compressedBuff)
 		target.close()
+
+static func checkCompressed(file: String) -> bool:
+	var reader: FileAccess = FileAccess.open(file, FileAccess.READ)
+	
+	var appendedDataAmt: int = detectAppendedData(reader)
+	reader.close()
+	if (appendedDataAmt == -1):
+		return false
+	return true
 
 # Utility Class, Algorithms taken from NDSPY/CodeCompression
 class LZCompress:
@@ -199,6 +226,7 @@ class LZCompress:
 	# MODIFIED from NDSPY/CodeCompression to achieve compression that better matches Nintendo's original files
 	# Modification has to do with rolling back ignore positions after completing compression, to use more of original data when it is space equivalent.
 		# Very occasionally will produce larger files than NDSPY, but in a way that exactly matches the files Nintendo produced in the original ROM
+		# SEE: https://github.com/RoadrunnerWMC/ndspy/pull/23
 	func compress(pSubtract: int, maxMDiff: int, maxMLen: int, sRev: bool):
 		posSubtract = pSubtract
 		maxMatchDiff = maxMDiff
@@ -208,6 +236,7 @@ class LZCompress:
 		var result: PackedByteArray = PackedByteArray()
 		var currentInd: int = 0
 		var ignoreDict: Dictionary = {}
+		ignoreDict[0] = Vector2i(currentInd, result.size())
 		var bestSavingsSoFar: int = 0
 		
 		while (currentInd < dataSize):
@@ -240,12 +269,13 @@ class LZCompress:
 			result.encode_u8(blockFlagsOffset, blockFlags)
 			
 		var finalSavings:int = currentInd - result.size()
+		if (finalSavings < 0):
+			return [result, currentInd - ignoreDict[0][0], len(result) - ignoreDict[0][1]]
 		if (finalSavings < bestSavingsSoFar):
 			finalSavings += 1
+			
 			while (finalSavings not in ignoreDict):
-				print("Rounding up")
 				finalSavings += 1
-			print(finalSavings)
 			return [result, currentInd - ignoreDict[finalSavings][0], len(result) - ignoreDict[finalSavings][1]]
 		else:
 			return [result, 0, 0]

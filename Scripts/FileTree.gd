@@ -35,5 +35,5 @@ func populateFromNitroDir(directory: NdsGd.NitroDirectory, parent: TreeItem) -> 
 		currentButtonID += 1
 		i += 1
 
-func _on_button_clicked(item: TreeItem, column: int, id: int, mouse_button_index: int) -> void:
+func fileClicked(item: TreeItem, column: int, id: int, mouse_button_index: int) -> void:
 	narcSelected.emit(buttonDict[id])

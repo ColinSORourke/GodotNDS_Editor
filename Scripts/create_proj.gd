@@ -53,8 +53,9 @@ func createProject() -> void:
 	# SOMETIME IN THE FUTURE
 	# This should be in a "Try Catch" loop
 	NdsGd.extractROM(rom, projectPath.path_join("/unpacked"))
-
 	ProjManager.ProjName = $NameEdit.text
 	ProjManager.ProjPath = projectPath
+	ProjManager.iscompArm9()
+	ProjManager.overlaysCompressed()
 	
 	get_tree().change_scene_to_file("res://Scenes/ProjectView.tscn")

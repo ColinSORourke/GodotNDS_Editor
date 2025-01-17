@@ -20,7 +20,8 @@ func activate() -> void:
 		count += 1
 		i += 2
 		newPos += 3
-	$HexDisplay.text = myFileStringSpaced
+	$Hex/HexDisplay.text = myFileStringSpaced
+	
 	if (ProjManager.myFilePath == "NARC"):
 		$FileButtons/Duplicate.visible = true
 		$FileButtons/Export.visible = true
@@ -41,6 +42,11 @@ func importFile(path: String) -> void:
 	ProjManager.importFile(path)
 	self.activate()
 	
+func goto() -> void:
+	var position = $Hex/LineEdit.text.hex_to_int() + ($Hex/LineEdit.text.hex_to_int() / 2)
+	$Hex/HexDisplay.select(position/ 24, position % 24, position / 24, position % 24 + 4, 0)
+	$Hex/HexDisplay.scroll_vertical = position/ 24
+
 func duplicateFile() -> void:
 	ProjManager.duplicateFile()
 	$FileName.text = ProjManager.myFileName

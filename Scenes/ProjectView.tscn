@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://bh1iuhvtvdnpg"]
+[gd_scene load_steps=17 format=3 uid="uid://bh1iuhvtvdnpg"]
 
 [ext_resource type="Script" path="res://Scripts/ProjectViewScene.gd" id="1_7jn5s"]
 [ext_resource type="Texture2D" uid="uid://b2kpqy7l0eoni" path="res://Assets/icon.svg" id="1_x08yx"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://Scripts/NarcTree.gd" id="8_yjs0q"]
 [ext_resource type="Script" path="res://Scripts/FilePanel.gd" id="9_oi2nf"]
 [ext_resource type="Theme" uid="uid://b4t5ys64v27ey" path="res://Assets/MonoSpace.tres" id="10_7ser7"]
+[ext_resource type="Script" path="res://Scripts/hexLineEdit.gd" id="11_ba3dq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wcq0y"]
 border_width_left = 3
@@ -26,6 +27,34 @@ expand_margin_right = 8.0
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7q7v1"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hu1ev"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_86td6"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.820615, 0.823177, 0.513654, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+expand_margin_left = 8.0
+expand_margin_right = 8.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_04s0e"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.820615, 0.823177, 0.513654, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+expand_margin_left = 8.0
+expand_margin_right = 8.0
 
 [node name="ProjectView" type="Control"]
 layout_mode = 3
@@ -233,16 +262,71 @@ offset_right = 114.0
 offset_bottom = 88.0
 text = "File"
 
-[node name="HexDisplay" type="TextEdit" parent="FilePanel"]
-layout_mode = 0
-offset_left = 49.0
-offset_top = 95.0
-offset_right = 649.0
-offset_bottom = 695.0
+[node name="Hex" type="Control" parent="FilePanel"]
+anchors_preset = 0
+offset_left = 17.0
+offset_top = 88.0
+offset_right = 617.0
+offset_bottom = 788.0
+
+[node name="HexDisplay" type="TextEdit" parent="FilePanel/Hex"]
+layout_mode = 1
+offset_right = 600.0
+offset_bottom = 600.0
 theme = ExtResource("10_7ser7")
 theme_override_font_sizes/font_size = 40
-text = "00 44 88 FF"
+text = "00 44 88 "
 editable = false
+
+[node name="GoTo" type="Label" parent="FilePanel/Hex"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -82.0
+offset_right = 195.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 60
+text = "GOTO:"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LineEdit" type="LineEdit" parent="FilePanel/Hex"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 193.0
+offset_top = -74.0
+offset_right = 503.0
+offset_bottom = -2.0
+grow_vertical = 0
+theme = ExtResource("10_7ser7")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/focus = SubResource("StyleBoxFlat_86td6")
+theme_override_styles/normal = SubResource("StyleBoxFlat_04s0e")
+text = "0x100"
+placeholder_text = "0x"
+max_length = 10
+script = ExtResource("11_ba3dq")
+
+[node name="Go" type="Button" parent="FilePanel/Hex"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 528.0
+offset_top = -55.0
+offset_right = 588.0
+offset_bottom = -16.0
+grow_vertical = 0
+size_flags_horizontal = 8
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = ExtResource("5_2bcqt")
+theme_override_styles/pressed = ExtResource("4_snj14")
+theme_override_styles/normal = ExtResource("5_2bcqt")
+text = "Go"
 
 [node name="FileButtons" type="VBoxContainer" parent="FilePanel"]
 layout_mode = 1
@@ -300,6 +384,8 @@ text = "Duplicate
 [connection signal="button_up" from="NarcList/Cancel" to="FilePanel" method="close"]
 [connection signal="addToNarcList" from="FilePanel" to="NarcList" method="addFile"]
 [connection signal="file_selected" from="FilePanel/FileDialog" to="FilePanel" method="importFile"]
+[connection signal="text_changed" from="FilePanel/Hex/LineEdit" to="FilePanel/Hex/LineEdit" method="_on_text_changed"]
+[connection signal="pressed" from="FilePanel/Hex/Go" to="FilePanel" method="goto"]
 [connection signal="pressed" from="FilePanel/FileButtons/Export" to="FilePanel" method="exportFile"]
 [connection signal="pressed" from="FilePanel/FileButtons/Import" to="FilePanel" method="openFileImport"]
 [connection signal="pressed" from="FilePanel/FileButtons/Duplicate" to="FilePanel" method="duplicateFile"]

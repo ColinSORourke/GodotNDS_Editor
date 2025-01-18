@@ -12,6 +12,9 @@ var RootPath: String = "Placeholder"
 var myNarc: NdsGd.NitroArchive = null
 var NarcPath: String = "Placeholder"
 
+var myPalette: NdsGd.Palette = null
+var myPalettePath: String = "Placeholder"
+
 var myFile: PackedByteArray = []
 var myFileName: String
 var myFilePath: String
@@ -25,6 +28,10 @@ var arm9Comp: bool = true
 var overlayComps: Array[String] = []
 # ALSO: If I provide Overlay Re-compression, I need to be able to identify if the overlay 'can't be compressed'
 # If I try to Decompress an Uncompressed File, Decompress just quits and does not create a new file.
+
+func _ready() -> void:
+	myPalette = NdsGd.Palette.new()
+	myPalette.initNum(16)
 
 func iscompArm9() -> void:
 	# ERROR NOTE: I am not 100% sure this check is accurate all of the time?
@@ -62,7 +69,6 @@ func loadFile(path: String) -> void:
 		myFileIndex = -1
 		NarcPath = "Not a NARC"
 	
-
 func loadNarcFile(index: int) -> void:
 	myFile = myNarc.files[index]
 	myFileName = myNarc.myFntb.names[index]
@@ -101,3 +107,14 @@ func duplicateFile() -> void:
 		myFileIndex = myNarc.files.size() - 1
 		myNarc.pack(NarcPath, true)
 		myFileName = myNarc.myFntb.names[myFileIndex]
+
+func loadPalette() -> ImageTexture:
+	myPalette = NdsGd.Palette.new()
+	myPalette.initFromBytes(myFile)
+	myPalettePath = myFilePath
+	var myTexture: ImageTexture = ImageTexture.create_from_image(myPalette.toImage())
+	return myTexture
+
+func getPaletteTexture() -> ImageTexture:
+	var myTexture: ImageTexture = ImageTexture.create_from_image(myPalette.toImage())
+	return myTexture

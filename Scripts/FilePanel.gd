@@ -28,6 +28,13 @@ func activate() -> void:
 	else:
 		$FileButtons/Duplicate.visible = false
 		$FileButtons/Export.visible = false
+		
+	if (ProjManager.myFileName.get_extension() == "nclr"):
+		$FileButtons/LoadPLT.visible = true
+	else:
+		$FileButtons/LoadPLT.visible = false
+	var texture = ProjManager.getPaletteTexture()
+	$PaletteTexture.texture = texture
 	
 func exportFile() -> void:
 	ProjManager.exportFile()
@@ -51,3 +58,8 @@ func duplicateFile() -> void:
 	ProjManager.duplicateFile()
 	$FileName.text = ProjManager.myFileName
 	addToNarcList.emit()
+
+func loadPalette() -> void:
+	var texture = ProjManager.loadPalette()
+	$PaletteTexture.texture = texture
+	$PaletteTexture.visible = true

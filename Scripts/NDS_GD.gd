@@ -1125,7 +1125,7 @@ class NitroArchive:
 					var byte = bytes.decode_u8(currPos + 8)
 					subDirectories[i][3] = byte
 					if (byte == 0x00):
-						names.append(str(i + 1))
+						names.append(str(i))
 						currPos += 9
 					else:
 						names.append(bytes.slice(currPos + 9, currPos + 9 + byte).get_string_from_utf8())
@@ -1136,7 +1136,7 @@ class NitroArchive:
 			else:
 				var i = 0
 				while (i < numFiles):
-					names.append(str(i + 1))
+					names.append(str(i))
 					i += 1
 	
 	# Unpack the NARC
@@ -1283,7 +1283,124 @@ class NitroArchive:
 		if (!myFntb.names[index].get_basename().is_valid_int()):
 			myFntb.names.append(myFntb.names[index].get_basename() + "cp" + extension)
 		else:
-			myFntb.names.append(str(files.size()) + extension)
+			myFntb.names.append(str(files.size() - 1) + extension)
+
+# NCLR, NPCR Palette
+# https://github.com/turtleisaac/Nds4j/blob/main/src/main/java/io/github/turtleisaac/nds4j/images/Palette.java
+class Palette:
+	const TTLPMagic = 0x504C5454
+	
+	const NCLRMagic = 0x4E434C52
+	const palHeader: PackedByteArray = [0x54, 0x54, 0x4C, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00]
+	const IRColor = Color(72, 144, 160)
+	
+	var magic: int
+	var sectionSize: int
+	var bitDepth = {NONE = 0, FOUR_BPP = 4, EIGHT_BPP = 8}
+	var compNum: int
+	
+	var colors: Array[Color] = []
+	var ir: bool = false
+	
+	var myImage: Image
+	
+	func initNum(num: int) -> void:
+		var i = 0
+		while(i < num):
+			var j = (i * 8) % 256
+			colors.append(Color(j))
+			i += 1
+		
+	func initFromBytes(bytes: PackedByteArray) -> void:
+		magic = bytes.decode_u32(16)
+		if (magic != TTLPMagic):
+			print("Invalid Palette, wrong magic")
+			print(String.num_int64(magic, 16))
+			return
+		if (bytes.size() % 2 != 0):
+			print("Invalid palette, File Size not multiple of two")
+			return
+		sectionSize = bytes.decode_u32(20)
+		if (bytes.decode_u16(24) == 3):
+			bitDepth = bitDepth.FOUR_BPP
+		else:
+			bitDepth = bitDepth.EIGHT_BPP
+		
+		compNum = bytes.decode_u8(26)
+		var pltLength: int = bytes.decode_u32(32)
+		print(pltLength)
+		var startOffset: int = bytes.decode_u32(36)
+		
+		if (pltLength == 0 || pltLength > sectionSize):
+			pltLength = sectionSize - 0x18
+			
+		var numColors: int = 256
+		if (pltLength/2 < numColors):
+			numColors = pltLength/2
+			
+		var currInd: int = 0x18 + startOffset
+		var i = 0
+		while(i < numColors):
+			colors.append(bgr555toColor(bytes.decode_u8(currInd), bytes.decode_u8(currInd + 1)))
+			currInd += 2
+			i += 1
+		if (colors[i-1] == IRColor):
+			ir = true
+
+	func toBytes() -> PackedByteArray:
+		var returnBytes: PackedByteArray = []
+		var size: int = colors.size() * 2
+		returnBytes.resize(16)
+		returnBytes.encode_u32(0, NCLRMagic)
+		returnBytes.encode_u16(4, 0xFEFF)
+		returnBytes.encode_u16(6, 0x0100)
+		returnBytes.encode_u32(8, size + 40)
+		returnBytes.encode_u16(12, 0x10)
+		returnBytes.encode_u16(14, 1)
+		returnBytes.append_array(palHeader)
+		returnBytes.encode_u32(20, size + 24)
+		if (bitDepth == 4):
+			returnBytes.encode_u16(24, 0x3)
+		else:
+			returnBytes.encode_u16(24, 0x4)
+		returnBytes.encode_u8(26, compNum)
+		returnBytes.encode_u32(32, size)
+		
+		var i = 0
+		while (i < colors.size()):
+			returnBytes.append_array(colorToBgr555(colors[i]))
+			i += 1
+		return returnBytes
+
+	func toImage() -> Image:
+		var squareSize: int = 1
+		while(squareSize * squareSize < colors.size()):
+			squareSize += 1
+		var myImage = Image.create_empty(squareSize, squareSize, false, Image.FORMAT_RGBA8)
+		var i = 0
+		while(i < colors.size()):
+			myImage.set_pixel(i / squareSize, i % squareSize, colors[i])
+			i += 1
+		return myImage
+
+	static func bgr555toColor(byte1: int, byte2: int) -> Color:
+		var bgr: int = ((byte2 & 0xff) << 8) | (byte1 & 0xff)
+		var retColor = Color()
+		retColor.r8 = (bgr & 0x001F) << 3;
+		retColor.g8 = ((bgr & 0x03E0) >> 2);
+		retColor.b8 = ((bgr & 0x7C00) >> 7);
+		return retColor
+
+	static func colorToBgr555(c: Color) -> PackedByteArray:
+		var colorBytes: PackedByteArray = [0x00, 0x00]
+		var r: int = c.r8 / 8
+		var g: int = int(c.g8 / 8) << 5
+		var b: int = int(c.b8 / 8) << 10
+		var bgr: int = r + g + b
+		colorBytes[0] = bgr & 0xFF
+		colorBytes[1] = (bgr >> 8) & 0xFF
+		print
+		return colorBytes
 
 #########
 # Checksum Calculation

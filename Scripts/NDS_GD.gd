@@ -1296,7 +1296,8 @@ class Palette:
 	
 	var magic: int
 	var sectionSize: int
-	var bitDepth = {NONE = 0, FOUR_BPP = 4, EIGHT_BPP = 8}
+	enum bitType {NONE = 0, FOUR_BPP = 4, EIGHT_BPP = 8}
+	var bitDepth: bitType
 	var compNum: int
 	
 	var colors: Array[Color] = []
@@ -1304,11 +1305,20 @@ class Palette:
 	
 	var myImage: Image
 	
+	func _init() -> void:
+		# I don't know what this variable is! Could cause problem
+		compNum = 10
+	
 	func initNum(num: int) -> void:
 		var i = 0
+		var mult = 256/num
 		while(i < num):
-			var j = (i * 8) % 256
-			colors.append(Color(j))
+			var j = (i * mult) % 256
+			var nColor = Color(0, 0, 0)
+			nColor.r8 = j
+			nColor.b8 = j
+			nColor.g8 = j
+			colors.append(nColor)
 			i += 1
 		
 	func initFromBytes(bytes: PackedByteArray) -> void:
@@ -1322,9 +1332,9 @@ class Palette:
 			return
 		sectionSize = bytes.decode_u32(20)
 		if (bytes.decode_u16(24) == 3):
-			bitDepth = bitDepth.FOUR_BPP
+			bitDepth = bitType.FOUR_BPP
 		else:
-			bitDepth = bitDepth.EIGHT_BPP
+			bitDepth = bitType.EIGHT_BPP
 		
 		compNum = bytes.decode_u8(26)
 		var pltLength: int = bytes.decode_u32(32)
@@ -1347,6 +1357,20 @@ class Palette:
 		if (colors[i-1] == IRColor):
 			ir = true
 
+	func initFromJasc(jasc: PackedStringArray) -> void:
+		if(jasc[0] != "JASC-PAL"):
+			# NOT A JASC PALETTE
+			return
+		var i = 3
+		while (i < jasc.size() - 1):
+			var nColor = Color()
+			var rgb = jasc[i].split(" ")
+			nColor.r8 = rgb[0].to_int()
+			nColor.g8 = rgb[1].to_int()
+			nColor.b8 = rgb[2].to_int()
+			colors.append(nColor)
+			i += 1
+		
 	func toBytes() -> PackedByteArray:
 		var returnBytes: PackedByteArray = []
 		var size: int = colors.size() * 2
@@ -1359,7 +1383,7 @@ class Palette:
 		returnBytes.encode_u16(14, 1)
 		returnBytes.append_array(palHeader)
 		returnBytes.encode_u32(20, size + 24)
-		if (bitDepth == 4):
+		if (bitDepth == bitType.FOUR_BPP):
 			returnBytes.encode_u16(24, 0x3)
 		else:
 			returnBytes.encode_u16(24, 0x4)
@@ -1383,6 +1407,19 @@ class Palette:
 			i += 1
 		return myImage
 
+	# JASC-Palette
+	# https://liero.nl/lierohack/docformats/other-jasc.html
+	func toJascPal() -> PackedStringArray:
+		var returnArray: PackedStringArray = []
+		returnArray.append("JASC-PAL")
+		returnArray.append("0100")
+		returnArray.append("256")
+		var i = 0
+		while (i < colors.size()):
+			returnArray.append(colorToJascStr(colors[i]))
+			i += 1
+		return returnArray
+
 	static func bgr555toColor(byte1: int, byte2: int) -> Color:
 		var bgr: int = ((byte2 & 0xff) << 8) | (byte1 & 0xff)
 		var retColor = Color()
@@ -1402,6 +1439,88 @@ class Palette:
 		print
 		return colorBytes
 
+	static func colorToJascStr(c: Color) -> String:
+		var retStr = ""
+		retStr += str(c.r8) + " "
+		retStr += str(c.g8) + " "
+		retStr += str(c.b8)
+		return retStr
+
+class IndexedImage:
+	
+	const paletteChunkHeader: PackedByteArray = [0x50,0x4C,0x54,0x45]
+	const dataChunkHeader: PackedByteArray = [0x49,0x44,0x41,0x54]
+	const imageChunkHeader: PackedByteArray = [0x49,0x48,0x44,0x52]
+	const endChunkHeader: PackedByteArray = [0x49,0x45,0x4E,0x44]
+	const PNGHeader: PackedByteArray = [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A]
+	
+	var myBytes: PackedByteArray
+	var paletteIndex: int
+	var dataIndex: int
+	
+	var width: int
+	var height: int
+	
+	var myPalette: Palette
+	
+	func initFromPNG(path: String, justPal: bool = false):
+		myBytes = FileAccess.get_file_as_bytes(path)
+		if (myBytes.slice(0, 8) != PNGHeader):
+			print("NOT A PNG")
+			return
+		
+		var currInd = 0
+		while (currInd < myBytes.size() - 4):
+			var currFour: PackedByteArray = myBytes.slice(currInd, currInd + 4)
+			if (currFour == paletteChunkHeader):
+				paletteIndex = currInd
+			if (currFour == dataChunkHeader):
+				dataIndex = currInd
+			if (currFour == endChunkHeader):
+				break
+			currInd += 1
+			
+		width = myBytes.decode_u32(16)
+		height = myBytes.decode_u32(20)
+		myPalette = Palette.new()
+		
+		myPalette.bitDepth = myBytes.decode_u8(24)
+		var valid: bool = true && myBytes.decode_u8(25) == 3
+		valid = valid && myBytes.decode_u8(26) == 0
+		valid = valid && myBytes.decode_u8(27) == 0
+		valid = valid && myBytes.decode_u8(28) <= 1
+		
+		if (!valid):
+			print("PNG IMPROPERLY FORMATTED")
+			return
+	
+		var chunkLength: int = swapEndianInt32(myBytes.decode_u32(paletteIndex - 4))
+		var i = 0
+		while (i < chunkLength/3):
+			var nColor: Color = Color()
+			var cVal: int = myBytes.decode_u8(paletteIndex + 4 + i*3)
+			nColor.r8 = cVal
+			cVal = myBytes.decode_u8(paletteIndex + 4 + i*3 + 1)
+			nColor.g8 = cVal
+			cVal = myBytes.decode_u8(paletteIndex + 4 + i*3 + 2)
+			nColor.b8 = cVal
+			print("Appneding " + str(nColor))
+			myPalette.colors.append(nColor)
+			i += 1
+		
+		if (justPal):
+			# Done here!
+			return
+	
+	static func swapEndianInt32(i: int) -> int:
+		var b1 = (i & 0xFF000000) >> 24
+		var b2 = (i & 0x00FF0000) >> 8
+		var b3 = (i & 0x0000FF00) << 8
+		var b4 = (i & 0x000000FF) << 24
+		return b1 | b2 | b3 | b4
+	
+	
+	
 #########
 # Checksum Calculation
 # https://github.com/snksoft/java-crc/blob/master/src/main/java/com/github/snksoft/crc/CRC.java

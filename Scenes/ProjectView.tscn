@@ -143,7 +143,6 @@ text = "Compile
 "
 
 [node name="Decomp" type="Button" parent="."]
-visible = false
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -238,7 +237,7 @@ visible = false
 layout_mode = 0
 offset_left = 440.0
 offset_top = 232.0
-offset_right = 1440.0
+offset_right = 1565.0
 offset_bottom = 1032.0
 theme = ExtResource("3_6eryf")
 theme_override_styles/panel = SubResource("StyleBoxFlat_hu1ev")
@@ -382,12 +381,66 @@ theme_override_styles/normal = ExtResource("5_2bcqt")
 text = "Load Palette
 "
 
-[node name="PaletteTexture" type="TextureRect" parent="FilePanel"]
+[node name="ImportPAL" type="Button" parent="FilePanel/FileButtons"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = ExtResource("5_2bcqt")
+theme_override_styles/pressed = ExtResource("4_snj14")
+theme_override_styles/normal = ExtResource("5_2bcqt")
+text = "Import .PAL
+"
+
+[node name="ImportPNG" type="Button" parent="FilePanel/FileButtons"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = ExtResource("5_2bcqt")
+theme_override_styles/pressed = ExtResource("4_snj14")
+theme_override_styles/normal = ExtResource("5_2bcqt")
+text = "Import .PNG
+"
+
+[node name="ExportPAL" type="Button" parent="FilePanel/FileButtons"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = ExtResource("5_2bcqt")
+theme_override_styles/pressed = ExtResource("4_snj14")
+theme_override_styles/normal = ExtResource("5_2bcqt")
+text = "Export .PAL
+"
+
+[node name="PLTPanel" type="Panel" parent="FilePanel"]
 layout_mode = 1
-offset_left = 634.0
-offset_top = 91.0
-offset_right = 754.0
-offset_bottom = 211.0
+offset_left = 658.0
+offset_top = 533.0
+offset_right = 1058.0
+offset_bottom = 783.0
+
+[node name="PaletteTexture" type="TextureRect" parent="FilePanel/PLTPanel"]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 176.0
+offset_bottom = 176.0
+
+[node name="PaletteLabel" type="Label" parent="FilePanel/PLTPanel"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -80.0
+offset_right = 219.0
+grow_vertical = 0
+text = "Default"
 
 [connection signal="pressed" from="Back" to="." method="back"]
 [connection signal="pressed" from="Compile" to="." method="compile"]
@@ -401,6 +454,7 @@ offset_bottom = 211.0
 [connection signal="button_up" from="NarcList/Cancel" to="NarcList" method="cancel"]
 [connection signal="button_up" from="NarcList/Cancel" to="FilePanel" method="close"]
 [connection signal="addToNarcList" from="FilePanel" to="NarcList" method="addFile"]
+[connection signal="canceled" from="FilePanel/FileDialog" to="FilePanel" method="cancelFileImport"]
 [connection signal="file_selected" from="FilePanel/FileDialog" to="FilePanel" method="importFile"]
 [connection signal="text_changed" from="FilePanel/Hex/LineEdit" to="FilePanel/Hex/LineEdit" method="_on_text_changed"]
 [connection signal="pressed" from="FilePanel/Hex/Go" to="FilePanel" method="goto"]
@@ -408,3 +462,6 @@ offset_bottom = 211.0
 [connection signal="pressed" from="FilePanel/FileButtons/Import" to="FilePanel" method="openFileImport"]
 [connection signal="pressed" from="FilePanel/FileButtons/Duplicate" to="FilePanel" method="duplicateFile"]
 [connection signal="pressed" from="FilePanel/FileButtons/LoadPLT" to="FilePanel" method="loadPalette"]
+[connection signal="pressed" from="FilePanel/FileButtons/ImportPAL" to="FilePanel" method="importJascPal"]
+[connection signal="pressed" from="FilePanel/FileButtons/ImportPNG" to="FilePanel" method="importPngPal"]
+[connection signal="pressed" from="FilePanel/FileButtons/ExportPAL" to="FilePanel" method="exportPalette"]

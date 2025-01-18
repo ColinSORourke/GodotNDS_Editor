@@ -2,6 +2,9 @@ extends Panel
 
 signal addToNarcList
 
+enum importEnum {NONE = 0, JASC = 1, PNGPAL = 2}
+var importFlag: importEnum
+
 func activate() -> void:
 	self.visible = true
 	$FileName.visible = true
@@ -31,10 +34,18 @@ func activate() -> void:
 		
 	if (ProjManager.myFileName.get_extension() == "nclr"):
 		$FileButtons/LoadPLT.visible = true
+		$FileButtons/ImportPAL.visible = true
+		$FileButtons/ImportPNG.visible = true
+		$FileButtons/ExportPAL.visible = true
 	else:
 		$FileButtons/LoadPLT.visible = false
+		$FileButtons/ImportPAL.visible = false
+		$FileButtons/ImportPNG.visible = false
+		$FileButtons/ExportPAL.visible = false
+		
 	var texture = ProjManager.getPaletteTexture()
-	$PaletteTexture.texture = texture
+	$PLTPanel/PaletteTexture.texture = texture
+	
 	
 func exportFile() -> void:
 	ProjManager.exportFile()
@@ -42,11 +53,23 @@ func exportFile() -> void:
 func openFileImport() -> void:
 	$FileDialog.visible = true
 
+func cancelFileImport() -> void:
+	$FileDialog.clear_filters()
+	pass
+
 func close() -> void:
 	self.visible = false
 
 func importFile(path: String) -> void:
-	ProjManager.importFile(path)
+	if (importFlag == importEnum.JASC):
+		importFlag = importEnum.NONE
+		ProjManager.importJascPal(path)
+	elif (importFlag == importEnum.PNGPAL):
+		importFlag = importEnum.NONE
+		ProjManager.importPngPal(path)
+	else:
+		ProjManager.importFile(path)
+	$FileDialog.clear_filters()
 	self.activate()
 	
 func goto() -> void:
@@ -61,5 +84,19 @@ func duplicateFile() -> void:
 
 func loadPalette() -> void:
 	var texture = ProjManager.loadPalette()
-	$PaletteTexture.texture = texture
-	$PaletteTexture.visible = true
+	$PLTPanel/PaletteTexture.texture = texture
+	$PLTPanel/PaletteLabel.text = ProjManager.myPalettePath
+
+func exportPalette() -> void:
+	ProjManager.exportJascPal()
+
+func importJascPal() -> void:
+	importFlag = importEnum.JASC
+	$FileDialog.add_filter("*.pal")
+	openFileImport()
+	
+func importPngPal() -> void:
+	importFlag = importEnum.PNGPAL
+	$FileDialog.add_filter("*.png")
+	openFileImport()
+	

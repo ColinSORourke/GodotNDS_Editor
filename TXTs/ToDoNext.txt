@@ -8,14 +8,13 @@ Upon creating a project, swap from the main scene to a project scene.
 	Project Scene has the "compile" button
 	Project Scene has a quit button.
 
------ Errors & Warning -----
-Detect and warn about various issues.
-	Directories/Files already existing.
-	Invalid file selections
-	Catch file errors reading a malformed ROM.
-
------ Decompress -----
-Be able to decompress and work with de-compressed ARM9s & Overlays
-	Be able to detect if a file is decompressed.
-	Decompress files myself. (Maybe automatically)
-	Maybe automatically re-compress files when compiling a ROM.
+----- File Formats -----
+Support a variety of File Formats for Import/Export/Conversion
+	NCGR <-> PNG
+	NBGR <-> PNG
+	NCLR <-> JASC PAL
+		https://liero.nl/lierohack/docformats/other-jasc.html
+	NCLR <-- PNG (embedded in the indexed palette metadata)
+	NCER <-> JSON
+	NANR <-> JSON
+	BTX0 <-> PNG (tile layout) and data markup (frame layout)

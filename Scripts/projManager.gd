@@ -79,14 +79,14 @@ func exportFile() -> void:
 	if (!FileAccess.file_exists(ProjPath.path_join("exported"))):
 		DirAccess.make_dir_absolute(ProjPath.path_join("exported"))
 		
-	var exportName: String = ProjPath.path_join("exported").path_join(myFileName)
+	var exportPath: String = ProjPath.path_join("exported").path_join(myFileName)
 	var i: int = 0
-	while(FileAccess.file_exists(exportName)):
+	while(FileAccess.file_exists(exportPath)):
 		var extraName: String = myFileName.get_basename() + "_" + str(i) + "." + myFileName.get_extension()
-		exportName = ProjPath.path_join("exported").path_join(extraName)
+		exportPath = ProjPath.path_join("exported").path_join(extraName)
 		i += 1
 	
-	var expFile: FileAccess = FileAccess.open(exportName, FileAccess.WRITE)
+	var expFile: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
 	expFile.store_buffer(myFile)
 	expFile.close()
 	
@@ -101,6 +101,57 @@ func importFile(path: String) -> void:
 		writer.store_buffer(myFile)
 		writer.close()
 
+func exportJascPal() -> void:
+	if (!FileAccess.file_exists(ProjPath.path_join("exported"))):
+		DirAccess.make_dir_absolute(ProjPath.path_join("exported"))
+		
+	var expFileName: String = myFileName.get_file().get_basename()
+	var exportPath: String = ProjPath.path_join("exported").path_join(expFileName) + ".pal"
+	var i: int = 0
+	while(FileAccess.file_exists(exportPath)):
+		var extraName: String = expFileName + "_" + str(i) + ".pal"
+		exportPath = ProjPath.path_join("exported").path_join(extraName)
+	
+	var expFile: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
+	var expPalette = NdsGd.Palette.new()
+	expPalette.initFromBytes(myFile)
+	var jascStrings = expPalette.toJascPal()
+	i = 0
+	while (i < jascStrings.size()):
+		expFile.store_line(jascStrings[i])
+		i += 1
+	expFile.close()
+
+func importJascPal(path: String) -> void:
+	var newPalette: NdsGd.Palette = NdsGd.Palette.new()
+	var jascText: PackedStringArray = FileAccess.get_file_as_string(path).split("\n")
+	newPalette.initFromJasc(jascText)
+	myPalette = newPalette
+	if (myFilePath == "NARC"):
+		myNarc.files[myFileIndex] = myPalette.toBytes()
+		myNarc.pack(NarcPath, true)
+		myFile = myNarc.files[myFileIndex]
+	else:
+		myFile = myPalette.toBytes()
+		var writer = FileAccess.open(myFilePath, FileAccess.WRITE)
+		writer.store_buffer(myFile)
+		writer.close()
+
+func importPngPal(path: String) -> void:
+	var idxImage: NdsGd.IndexedImage = NdsGd.IndexedImage.new()
+	idxImage.initFromPNG(path)
+	myPalette = idxImage.myPalette
+	if (myFilePath == "NARC"):
+		myNarc.files[myFileIndex] = myPalette.toBytes()
+		myNarc.pack(NarcPath, true)
+		myFile = myNarc.files[myFileIndex]
+	else:
+		myFile = myPalette.toBytes()
+		var writer = FileAccess.open(myFilePath, FileAccess.WRITE)
+		writer.store_buffer(myFile)
+		writer.close()
+	pass
+
 func duplicateFile() -> void:
 	if (myFilePath == "NARC"):
 		myNarc.duplicate(myFileIndex)
@@ -111,7 +162,7 @@ func duplicateFile() -> void:
 func loadPalette() -> ImageTexture:
 	myPalette = NdsGd.Palette.new()
 	myPalette.initFromBytes(myFile)
-	myPalettePath = myFilePath
+	myPalettePath = myFileName
 	var myTexture: ImageTexture = ImageTexture.create_from_image(myPalette.toImage())
 	return myTexture
 

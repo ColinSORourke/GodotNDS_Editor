@@ -996,6 +996,22 @@ class FAT:
 		else:
 			return 0;
 
+# NTR Header
+class ntrHeader:
+	var magic: int
+	var constant: int
+	var fileSize: int
+	var headerSize: int
+	var nSections: int
+	const bufferLength: int = 16
+	
+	func process(bytes: PackedByteArray) -> void:
+		magic = bytes.decode_u32(0)
+		constant = bytes.decode_u32(4)
+		fileSize = bytes.decode_u32(8)
+		headerSize = bytes.decode_u16(12)
+		nSections = bytes.decode_u16(14)
+
 # NARC File Unpacked
 # https://github.com/VendorPC/NARCTool/blob/master/0.4/backend/NARC.py
 class NitroArchive:
@@ -1052,7 +1068,7 @@ class NitroArchive:
 	}
 	
 	# NARC Header
-	var myHeader: narcHeader = narcHeader.new()
+	var myHeader: ntrHeader = ntrHeader.new()
 	
 	# File Allocation Table Block
 	var fatbMagic: int
@@ -1069,22 +1085,6 @@ class NitroArchive:
 	
 	# All the Files
 	var files: Array[PackedByteArray] = []
-	
-	# Narc Header Struct
-	class narcHeader:
-		var magic: int
-		var constant: int
-		var fileSize: int
-		var headerSize: int
-		var nSections: int
-		const bufferLength: int = 16
-		
-		func process(bytes: PackedByteArray) -> void:
-			magic = bytes.decode_u32(0)
-			constant = bytes.decode_u32(4)
-			fileSize = bytes.decode_u32(8)
-			headerSize = bytes.decode_u16(12)
-			nSections = bytes.decode_u16(14)
 	
 	# File Name Table Struct
 	class fntBlock:
@@ -1143,7 +1143,7 @@ class NitroArchive:
 	func unpack(narcBytes: PackedByteArray, decompress: bool = true) -> int:
 		
 		# Unpack Header
-		myHeader.process(narcBytes.slice(0, narcHeader.bufferLength))
+		myHeader.process(narcBytes.slice(0, ntrHeader.bufferLength))
 		
 		if (myHeader.magic not in magicDict || magicDict[myHeader.magic] != "NARC"):
 			print("Not a NARC")
@@ -1338,7 +1338,6 @@ class Palette:
 		
 		compNum = bytes.decode_u8(26)
 		var pltLength: int = bytes.decode_u32(32)
-		print(pltLength)
 		var startOffset: int = bytes.decode_u32(36)
 		
 		if (pltLength == 0 || pltLength > sectionSize):
@@ -1446,6 +1445,8 @@ class Palette:
 		retStr += str(c.b8)
 		return retStr
 
+# NCLR, NPCR Palette
+# https://github.com/turtleisaac/Nds4j/blob/main/src/main/java/io/github/turtleisaac/nds4j/images/IndexedImage.java
 class IndexedImage:
 	
 	const paletteChunkHeader: PackedByteArray = [0x50,0x4C,0x54,0x45]
@@ -1453,17 +1454,43 @@ class IndexedImage:
 	const imageChunkHeader: PackedByteArray = [0x49,0x48,0x44,0x52]
 	const endChunkHeader: PackedByteArray = [0x49,0x45,0x4E,0x44]
 	const PNGHeader: PackedByteArray = [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A]
+	const ncgrMagic: int = 0x4E434752 # "NCGR"
+	const charMagic: int = 0x43484152 # "CHAR"
+	
+	var myHeader: ntrHeader
 	
 	var myBytes: PackedByteArray
-	var paletteIndex: int
-	var dataIndex: int
+	var myImage: Image
 	
 	var width: int
 	var height: int
-	
 	var myPalette: Palette
 	
+	var sopc: bool
+	var charSectionSize: int
+	var colsPerChunk: int = 1
+	var rowsPerChunk: int = 1
+	var numTiles: int = 1
+	
+	static func isNCGR(bytes: PackedByteArray) -> bool:
+		var header = ntrHeader.new()
+		header.process(bytes)
+		return header.magic == IndexedImage.ncgrMagic
+	
+	func setPixel(x: int, y: int, p: int) -> void:
+		myImage.set_pixel(x, y, myPalette.colors[p])
+	
+	func emptyPixels() -> void:
+		print(width)
+		print(height)
+		myImage = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
+		
+	func toImage() -> Image:
+		return myImage
+	
 	func initFromPNG(path: String, justPal: bool = false):
+		var paletteIndex: int
+		var dataIndex: int
 		myBytes = FileAccess.get_file_as_bytes(path)
 		if (myBytes.slice(0, 8) != PNGHeader):
 			print("NOT A PNG")
@@ -1504,13 +1531,250 @@ class IndexedImage:
 			nColor.g8 = cVal
 			cVal = myBytes.decode_u8(paletteIndex + 4 + i*3 + 2)
 			nColor.b8 = cVal
-			print("Appneding " + str(nColor))
 			myPalette.colors.append(nColor)
 			i += 1
 		
 		if (justPal):
 			# Done here!
 			return
+	
+	func initFromNCGR(bytes: PackedByteArray):
+		var tilesHeight: int
+		var tilesWidth: int
+		myHeader = ntrHeader.new()
+		myBytes = bytes
+		myHeader.process(bytes)
+		sopc = myHeader.nSections == 2
+		if (bytes.decode_u32(16) != charMagic):
+			print("Invalid NCGR")
+			return
+		
+		if (myPalette == null):
+			myPalette = Palette.new()
+		charSectionSize = bytes.decode_u32(20)
+		tilesHeight = bytes.decode_s16(24)
+		tilesWidth = bytes.decode_s16(26)
+		if (tilesWidth <= 0):
+			tilesWidth = 1
+		if (bytes.decode_u32(28) == 3):
+			myPalette.bitDepth = myPalette.bitType.FOUR_BPP
+		else:
+			myPalette.bitDepth = myPalette.bitType.EIGHT_BPP
+		var numColors: int = 256
+		if (myPalette.bitDepth == myPalette.bitType.FOUR_BPP):
+			numColors = 16
+			
+		print("At Mapping Type")
+		var mappingType = bytes.decode_u16(34)
+		match mappingType:
+			0x0:
+				mappingType = 32
+			0x10:
+				mappingType = 64
+			0x20:
+				mappingType = 128
+			0x30:
+				mappingType = 256
+			_:
+				print("Invalid Mapping Type")
+				return
+		
+		var scanned: bool = bytes.decode_u8(36) == 1
+		var vram: int = bytes.decode_u8(39)
+		var tileSize = myPalette.bitDepth * 8
+		var divisor = 64
+		var bitDepthFour: bool = myPalette.bitDepth == 4
+		if (bitDepthFour):
+			divisor = 32
+		numTiles = bytes.decode_u32(40) / divisor
+		if (tilesHeight < 0):
+			tilesHeight = (numTiles + tilesWidth - 1) / tilesWidth
+			
+		width = tilesWidth * 8
+		height = tilesHeight * 8
+	
+		var pixelBytes = myBytes.slice(48)
+		var encKey: int = 0
+		
+		self.emptyPixels()
+		if (scanned && bitDepthFour):
+			print("Scanned Four BPP")
+			encKey = NcgrUtils.convertFromScannedFBPP(pixelBytes, self)
+		elif(scanned):
+			print("Scanned Eight BPP")
+			encKey = NcgrUtils.convertFromScannedEBPP(pixelBytes, self)
+		elif(bitDepthFour):
+			print("Tiled Four BPP")
+			NcgrUtils.convertFromTileFBPP(pixelBytes, self, 0)
+		else:
+			print("Tiled Eight BPP")
+			NcgrUtils.convertFromTileEBPP(pixelBytes, self, 0)
+			
+	## https://github.com/red031000/nitrogfx/blob/master/gfx.c#L116
+	class NcgrUtils:
+		
+		# Plat & HGSS is FrontToBack, 
+		
+		static func convertFromScannedFBPP(imageData: PackedByteArray, idxImage: IndexedImage, frontToBack: bool = true) -> int:
+			var encVal: int = 0
+			var data: Array[int] = []
+			var i: int = 0
+			var wh: int = idxImage.width*idxImage.height
+			while (i < wh/4):
+				data.append(imageData.decode_u16(i*2))
+				i += 1
+			
+			if (frontToBack):
+				encVal = data[0]
+				i = 0
+				while(i < data.size()):
+					data[i] = data[i] ^ (encVal & 0xFFFF)
+					encVal *= 1103515245
+					encVal += 24691
+					i += 1
+			else:
+				encVal = data[data.size() - 1]
+				i = data.size() - 1
+				while (i >= 0):
+					data[i] = data[i] ^ (encVal & 0xFFFF);
+					encVal *= 1103515245;
+					encVal += 24691;
+					i -= 1
+					
+			i = 0
+			while(i < wh/4):
+				var j = 0
+				while (j < 4):
+					var row = (i*4 + j) / idxImage.width
+					var col = (i*4 + j) % idxImage.width
+					idxImage.setPixel(col, row, (data[i] >> j*4) & 0xf)
+					j += 1
+				i += 1
+			return encVal
+			
+		static func convertFromScannedEBPP(imageData: PackedByteArray, idxImage: IndexedImage, frontToBack: bool = true) -> int:
+			var encVal: int = 0
+			var data: Array[int] = []
+			var i: int = 0
+			var wh: int = idxImage.width*idxImage.height
+			while (i < wh/4):
+				data.append(imageData.decode_u16(i*2))
+				i += 1
+			
+			if (frontToBack):
+				encVal = data[0]
+				i = 0
+				while(i < data.size()):
+					data[i] = data[i] ^ (encVal & 0xFFFF)
+					encVal *= 1103515245
+					encVal += 24691
+					i += 1
+			else:
+				encVal = data[data.size() - 1]
+				i = data.size() - 1
+				while (i >= 0):
+					data[i] = data[i] ^ (encVal & 0xFFFF);
+					encVal *= 1103515245;
+					encVal += 24691;
+					i -= 1
+					
+			i = 0
+			while(i < wh/2):
+				var j = 0
+				while (j < 2):
+					var row = (i*2 + j) / idxImage.width
+					var col = (i*2 + j) % idxImage.width
+					idxImage.setPixel(col, row, (data[i] >> j*8) & 0xff)
+					j += 1
+				i += 1
+			return encVal
+	
+		class ChunkManager:
+			var TilesSoFar: int = 0
+			var RowsSoFar: int = 0
+			var ChunkStartX: int = 0
+			var ChunkStartY: int = 0
+			
+			func advance(wide: int, cols: int, rows: int) -> void:
+				TilesSoFar += 1
+				if (TilesSoFar == cols):
+					TilesSoFar = 0
+					RowsSoFar += 1
+					if (RowsSoFar == rows):
+						RowsSoFar = 0
+						ChunkStartX += 1
+						if (ChunkStartX == wide):
+							ChunkStartX == 0
+							ChunkStartY += 1
+	
+		static func convertFromTileFBPP(imageData: PackedByteArray, idxImage: IndexedImage, startOffset: int = 0) -> void:
+			if (startOffset != 0):
+				imageData = imageData.slice(startOffset)
+			
+			var chunkMan: ChunkManager = ChunkManager.new()
+			var chunksWide: int = (idxImage.width / 8) / idxImage.colsPerChunk
+			var pitch: int = idxImage.width / 2
+			
+			var i: int = 0
+			var idx: int = 0
+			while(i < idxImage.numTiles):
+				var j = 0
+				while(j < 8):
+					var idxComponentY = (chunkMan.ChunkStartY * idxImage.rowsPerChunk + chunkMan.RowsSoFar) * 8 + j
+					var k = 0
+					while (k < 4):
+						var idxComponentX: int = (chunkMan.ChunkStartX * idxImage.colsPerChunk + chunkMan.TilesSoFar) * 4 + k
+						var compositeIdx: int = 2 * (idxComponentY * pitch + idxComponentX)
+						var destX: int = compositeIdx % idxImage.width
+						var destY: int = compositeIdx / idxImage.width
+						var pixelPair: int = imageData[idx]
+						idx += 1
+						var pixelLeft: int = pixelPair & 0xF
+						var pixelRight: int = pixelPair >> 4 & 0xF
+						
+						if (destX +  1 >= idxImage.width || destY >= idxImage.height):
+							print("Something has gone horribly wrong")
+							return
+						
+						idxImage.setPixel(destX, destY, pixelLeft)
+						idxImage.setPixel(destX + 1, destY, pixelRight)
+						k += 1
+					j += 1
+				chunkMan.advance(chunksWide, idxImage.colsPerChunk, idxImage.rowsPerChunk)
+				i += 1
+
+		static func convertFromTileEBPP(imageData: PackedByteArray, idxImage: IndexedImage, startOffset: int = 0) -> void:
+			if (startOffset != 0):
+				imageData = imageData.slice(startOffset)
+			
+			var chunkMan: ChunkManager = ChunkManager.new()
+			var chunksWide: int = (idxImage.width / 8) / idxImage.colsPerChunk
+			var pitch: int = idxImage.width
+			
+			var i: int = 0
+			var idx: int = 0
+			while(i < idxImage.numTiles):
+				var j = 0
+				while(j < 8):
+					var idxComponentY = (chunkMan.ChunkStartY * idxImage.rowsPerChunk + chunkMan.RowsSoFar) * 8 + j
+					var k = 0
+					while (k < 8):
+						var idxComponentX: int = (chunkMan.ChunkStartX * idxImage.colssPerChunk + chunkMan.TilesSoFar) * 8 + k
+						var compositeIdx: int = 2 * (idxComponentY * pitch + idxComponentX)
+						var destX: int = compositeIdx % idxImage.width
+						var destY: int = compositeIdx / idxImage.width
+						var pixel: int = imageData[idx]
+						idx += 1
+						
+						if (destX +  1 >= idxImage.width || destY >= idxImage.height):
+							print("Something has gone horribly wrong")
+							return
+						
+						idxImage.setPixel(destX, destY, pixel)
+						k += 1
+					j += 1
+				chunkMan.advance(chunksWide, idxImage.colsPerChunk, idxImage.rowsPerChunk)
+				i += 1
 	
 	static func swapEndianInt32(i: int) -> int:
 		var b1 = (i & 0xFF000000) >> 24

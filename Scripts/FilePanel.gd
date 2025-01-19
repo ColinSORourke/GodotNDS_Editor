@@ -42,6 +42,11 @@ func activate() -> void:
 		$FileButtons/ImportPAL.visible = false
 		$FileButtons/ImportPNG.visible = false
 		$FileButtons/ExportPAL.visible = false
+	
+	if (ProjManager.myFileName.get_extension() == "ncgr"):
+		$FileButtons/LoadImage.visible = true
+	else:
+		$FileButtons/LoadImage.visible = false
 		
 	var texture = ProjManager.getPaletteTexture()
 	$PLTPanel/PaletteTexture.texture = texture
@@ -86,6 +91,12 @@ func loadPalette() -> void:
 	var texture = ProjManager.loadPalette()
 	$PLTPanel/PaletteTexture.texture = texture
 	$PLTPanel/PaletteLabel.text = ProjManager.myPalettePath
+
+func loadImage() -> void:
+	var texture = ProjManager.loadImage()
+	$Hex.visible = false
+	$ImageTexture.texture = texture
+	$ImageTexture.visible = true
 
 func exportPalette() -> void:
 	ProjManager.exportJascPal()

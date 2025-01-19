@@ -2,12 +2,6 @@
 		To-Do
 -------------------------
 
------ Project Scene -----
-Upon creating a project, swap from the main scene to a project scene.
-	Project scene shows text from the ProjectFile
-	Project Scene has the "compile" button
-	Project Scene has a quit button.
-
 ----- File Formats -----
 Support a variety of File Formats for Import/Export/Conversion
 	NCGR <-> PNG

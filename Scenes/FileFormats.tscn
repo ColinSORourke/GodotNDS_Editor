@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ds18cuanuf0fn"]
+
+[ext_resource type="Script" path="res://Scripts/FileFormats.gd" id="1_46cxu"]
+
+[node name="FileFormats" type="Node"]
+script = ExtResource("1_46cxu")

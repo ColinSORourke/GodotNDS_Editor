@@ -12,14 +12,14 @@ var RootPath: String = "Placeholder"
 var myNarc: NdsGd.NitroArchive = null
 var NarcPath: String = "Placeholder"
 
-var myPalette: NdsGd.Palette = null
+var myPalette: FileFormats.Palette = null
 var myPalettePath: String = "Placeholder"
 
 var myFile: PackedByteArray = []
 var myFileName: String
 var myFilePath: String
 var myFileIndex: int
-var myImage: NdsGd.IndexedImage = null
+var myImage: FileFormats.IndexedImage = null
 
 var arm9Comp: bool = true
 # Quick test suggested ROM still runs whether or not each overlay is compressed.
@@ -31,7 +31,7 @@ var overlayComps: Array[String] = []
 # If I try to Decompress an Uncompressed File, Decompress just quits and does not create a new file.
 
 func _ready() -> void:
-	myPalette = NdsGd.Palette.new()
+	myPalette = FileFormats.Palette.new()
 	myPalette.initNum(16)
 
 func iscompArm9() -> void:
@@ -117,7 +117,7 @@ func exportJascPal() -> void:
 		exportPath = ProjPath.path_join("exported").path_join(extraName)
 	
 	var expFile: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
-	var expPalette = NdsGd.Palette.new()
+	var expPalette = FileFormats.Palette.new()
 	expPalette.initFromBytes(myFile)
 	var jascStrings = expPalette.toJascPal()
 	i = 0
@@ -127,7 +127,7 @@ func exportJascPal() -> void:
 	expFile.close()
 
 func importJascPal(path: String) -> void:
-	var newPalette: NdsGd.Palette = NdsGd.Palette.new()
+	var newPalette: FileFormats.Palette = FileFormats.Palette.new()
 	var jascText: PackedStringArray = FileAccess.get_file_as_string(path).split("\n")
 	newPalette.initFromJasc(jascText)
 	myPalette = newPalette
@@ -143,7 +143,7 @@ func importJascPal(path: String) -> void:
 	fileSwapped()
 
 func importPngPal(path: String) -> void:
-	var idxImage: NdsGd.IndexedImage = NdsGd.IndexedImage.new()
+	var idxImage: FileFormats.IndexedImage = FileFormats.IndexedImage.new()
 	idxImage.initFromPNG(path, true)
 	myPalette = idxImage.myPalette
 	if (myFilePath == "NARC"):
@@ -167,7 +167,7 @@ func duplicateFile() -> void:
 		fileSwapped()
 
 func loadPalette() -> ImageTexture:
-	myPalette = NdsGd.Palette.new()
+	myPalette = FileFormats.Palette.new()
 	myPalette.initFromBytes(myFile)
 	myPalettePath = myFileName
 	var myTexture: ImageTexture = ImageTexture.create_from_image(myPalette.toImage())
@@ -181,10 +181,10 @@ func fileSwapped() -> void:
 	myImage = null
 
 func loadImage() -> ImageTexture:
-	if (!NdsGd.IndexedImage.isNCGR(myFile)):
+	if (!FileFormats.IndexedImage.isNCGR(myFile)):
 		print("Not an image!")
 		return null
-	myImage = NdsGd.IndexedImage.new()
+	myImage = FileFormats.IndexedImage.new()
 	myImage.myPalette = myPalette
 	print("About to Init")
 	myImage.initFromNCGR(myFile)

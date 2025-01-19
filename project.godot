@@ -20,6 +20,7 @@ config/icon="res://Assets/icon.svg"
 NdsGd="*res://Scenes/NDS_GD.tscn"
 ProjManager="*res://Scenes/ProjManager.tscn"
 Compression="*res://Scenes/compression.tscn"
+FileFormats="*res://Scenes/FileFormats.tscn"
 
 [display]
 

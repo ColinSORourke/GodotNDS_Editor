@@ -370,6 +370,7 @@ text = "Duplicate
 "
 
 [node name="LoadPLT" type="Button" parent="FilePanel/FileButtons"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 8
 theme = ExtResource("3_6eryf")
@@ -381,6 +382,7 @@ text = "Load Palette
 "
 
 [node name="LoadImage" type="Button" parent="FilePanel/FileButtons"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 8
 theme = ExtResource("3_6eryf")
@@ -389,6 +391,30 @@ theme_override_styles/hover = ExtResource("5_2bcqt")
 theme_override_styles/pressed = ExtResource("4_snj14")
 theme_override_styles/normal = ExtResource("5_2bcqt")
 text = "Load Image
+"
+
+[node name="ShowHex" type="Button" parent="FilePanel/FileButtons"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = ExtResource("5_2bcqt")
+theme_override_styles/pressed = ExtResource("4_snj14")
+theme_override_styles/normal = ExtResource("5_2bcqt")
+text = "Show Hex
+"
+
+[node name="SavePNG" type="Button" parent="FilePanel/FileButtons"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = ExtResource("5_2bcqt")
+theme_override_styles/pressed = ExtResource("4_snj14")
+theme_override_styles/normal = ExtResource("5_2bcqt")
+text = "Save .PNG
 "
 
 [node name="ImportPAL" type="Button" parent="FilePanel/FileButtons"]
@@ -404,6 +430,18 @@ text = "Import .PAL
 "
 
 [node name="ImportPNG" type="Button" parent="FilePanel/FileButtons"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = ExtResource("5_2bcqt")
+theme_override_styles/pressed = ExtResource("4_snj14")
+theme_override_styles/normal = ExtResource("5_2bcqt")
+text = "Import .PNG
+"
+
+[node name="ImportPNGIMG" type="Button" parent="FilePanel/FileButtons"]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 8
@@ -482,6 +520,9 @@ stretch_mode = 4
 [connection signal="pressed" from="FilePanel/FileButtons/Duplicate" to="FilePanel" method="duplicateFile"]
 [connection signal="pressed" from="FilePanel/FileButtons/LoadPLT" to="FilePanel" method="loadPalette"]
 [connection signal="pressed" from="FilePanel/FileButtons/LoadImage" to="FilePanel" method="loadImage"]
+[connection signal="pressed" from="FilePanel/FileButtons/ShowHex" to="FilePanel" method="swapToHex"]
+[connection signal="pressed" from="FilePanel/FileButtons/SavePNG" to="FilePanel" method="saveImage"]
 [connection signal="pressed" from="FilePanel/FileButtons/ImportPAL" to="FilePanel" method="importJascPal"]
 [connection signal="pressed" from="FilePanel/FileButtons/ImportPNG" to="FilePanel" method="importPngPal"]
+[connection signal="pressed" from="FilePanel/FileButtons/ImportPNGIMG" to="FilePanel" method="importPngImage"]
 [connection signal="pressed" from="FilePanel/FileButtons/ExportPAL" to="FilePanel" method="exportPalette"]

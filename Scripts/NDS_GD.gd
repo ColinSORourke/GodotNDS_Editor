@@ -582,9 +582,9 @@ class NitroHeader:
 			byteOffset += 1
 		tmpHeader = tmpHeader.slice(0, byteOffset)
 		
-		header.headerChecksum = CRC.calculateCRC(tmpHeader.slice(0, 0x15e))
-		header.logoChecksum = CRC.calculateCRC(tmpHeader.slice(0xc0, 0x15c))
-		header.secureAreaChecksum = CRC.calculateCRC(tmpHeader.slice(header.arm9RomOffset, 0x8000 - header.arm9RomOffset))
+		header.headerChecksum = CRC.calculateCRC16(tmpHeader.slice(0, 0x15e))
+		header.logoChecksum = CRC.calculateCRC16(tmpHeader.slice(0xc0, 0x15c))
+		header.secureAreaChecksum = CRC.calculateCRC16(tmpHeader.slice(header.arm9RomOffset, 0x8000 - header.arm9RomOffset))
 		tmpHeader.clear()
 
 	static func compareHeader(headerA: NitroHeader, headerB: NitroHeader):
@@ -1292,22 +1292,31 @@ class NitroArchive:
 # https://github.com/snksoft/java-crc/blob/master/src/main/java/com/github/snksoft/crc/CRC.java
 #########
 class CRC:
-	const width: int = 16
-	const polynomial: int = 0x8005
-	const reflectIn: bool = true
-	const reflectOut: bool = true
-	const init: int = 0x0000
-	const finalXor: int = 0x0
+	class param16:
+		const width: int = 16
+		const polynomial: int = 0x8005
+		const reflectIn: bool = true
+		const reflectOut: bool = true
+		const init: int = 0x0000
+		const finalXor: int = 0x0
 	
-	static func calculateCRC(data: PackedByteArray) -> int:
-		var curValue: int = init
-		var topBit: int = 1 << (width - 1)
+	class param32:
+		const width: int = 32
+		const polynomial: int = 0x04C11DB7
+		const reflectIn: bool = true
+		const reflectOut: bool = true
+		const init: int = 0xFFFFFFFF
+		const finalXor: int = 0xFFFFFFFF
+	
+	static func calculateCRC16(data: PackedByteArray) -> int:
+		var curValue: int = param16.init
+		var topBit: int = 1 << (param16.width - 1)
 		var mask: int = (topBit << 1) - 1
 		var end: int = data.size()
 		var i = 0
 		while (i < end):
 			var curByte = data[i] & 0x00FF
-			if (reflectIn):
+			if (param16.reflectIn):
 				curByte = reflect(curByte, 8)
 			i += 1
 			
@@ -1320,13 +1329,44 @@ class CRC:
 					bit ^= topBit
 					
 				if (bit != 0):
-					curValue ^= polynomial
+					curValue ^= param16.polynomial
 				j >>= 1
 		
-		if (reflectOut):
-			curValue = reflect(curValue, width)
+		if (param16.reflectOut):
+			curValue = reflect(curValue, param16.width)
 			
-		curValue = curValue ^ finalXor
+		curValue = curValue ^ param16.finalXor
+		
+		return curValue & mask
+		
+	static func calculateCRC32(data: PackedByteArray) -> int:
+		var curValue: int = param32.init
+		var topBit: int = 1 << (param32.width - 1)
+		var mask: int = (topBit << 1) - 1
+		var end: int = data.size()
+		var i = 0
+		while (i < end):
+			var curByte = data[i] & 0x00FF
+			if (param32.reflectIn):
+				curByte = reflect(curByte, 8)
+			i += 1
+			
+			var j: int = 0x80
+			while (j != 0):
+				var bit: int = curValue & topBit
+				curValue <<= 1
+				
+				if ((curByte & j) != 0):
+					bit ^= topBit
+					
+				if (bit != 0):
+					curValue ^= param32.polynomial
+				j >>= 1
+		
+		if (param32.reflectOut):
+			curValue = reflect(curValue, param32.width)
+			
+		curValue = curValue ^ param32.finalXor
 		
 		return curValue & mask
 		

@@ -115,6 +115,7 @@ func exportJascPal() -> void:
 	while(FileAccess.file_exists(exportPath)):
 		var extraName: String = expFileName + "_" + str(i) + ".pal"
 		exportPath = ProjPath.path_join("exported").path_join(extraName)
+		i += 1
 	
 	var expFile: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
 	var expPalette = FileFormats.Palette.new()
@@ -158,6 +159,25 @@ func importPngPal(path: String) -> void:
 	fileSwapped()
 	pass
 
+func importPngImg(path: String) -> ImageTexture:
+	var idxImage: FileFormats.IndexedImage = FileFormats.IndexedImage.new()
+	idxImage.initFromPNG(path)
+	var ncgrParams = myImage.myParams
+	myImage = idxImage
+	print("Starting NCGR Bytes")
+	if (myFilePath == "NARC"):
+		myNarc.files[myFileIndex] = myImage.toBytesNCGR(ncgrParams)
+		myNarc.pack(NarcPath, true)
+		myFile = myNarc.files[myFileIndex]
+	else:
+		myFile = myImage.toBytesNCGR(ncgrParams)
+		var writer = FileAccess.open(myFilePath, FileAccess.WRITE)
+		writer.store_buffer(myFile)
+		writer.close()
+	idxImage.updatePalette(myPalette)
+	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.toImage())
+	return myTexture
+
 func duplicateFile() -> void:
 	if (myFilePath == "NARC"):
 		myNarc.duplicate(myFileIndex)
@@ -186,10 +206,27 @@ func loadImage() -> ImageTexture:
 		return null
 	myImage = FileFormats.IndexedImage.new()
 	myImage.myPalette = myPalette
-	print("About to Init")
 	myImage.initFromNCGR(myFile)
 	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.toImage())
 	return myTexture
+
+func exportImage() -> void:
+	if (!FileAccess.file_exists(ProjPath.path_join("exported"))):
+		DirAccess.make_dir_absolute(ProjPath.path_join("exported"))
+	if (myImage == null):
+		print("No loaded image to export!")
+		return
+	var expFileName: String = myFileName.get_file().get_basename()
+	var exportPath: String = ProjPath.path_join("exported").path_join(expFileName) + ".png"
+	var i: int = 0
+	while(FileAccess.file_exists(exportPath)):
+		var extraName: String = expFileName + "_" + str(i) + ".png"
+		exportPath = ProjPath.path_join("exported").path_join(extraName)
+		i += 1
+	var f: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
+	f.store_buffer(myImage.saveIndexedPNG())
+	f.close()
+	
 
 func getImageTexture() -> ImageTexture:
 	if (myImage != null):

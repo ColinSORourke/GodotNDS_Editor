@@ -2,7 +2,7 @@ extends Panel
 
 signal addToNarcList
 
-enum importEnum {NONE = 0, JASC = 1, PNGPAL = 2}
+enum importEnum {NONE = 0, JASC = 1, PNGPAL = 2, PNGIMG = 3}
 var importFlag: importEnum
 
 func activate() -> void:
@@ -24,6 +24,8 @@ func activate() -> void:
 		i += 2
 		newPos += 3
 	$Hex/HexDisplay.text = myFileStringSpaced
+	$Hex.visible = true
+	$ImageTexture.visible = false
 	
 	if (ProjManager.myFilePath == "NARC"):
 		$FileButtons/Duplicate.visible = true
@@ -47,6 +49,9 @@ func activate() -> void:
 		$FileButtons/LoadImage.visible = true
 	else:
 		$FileButtons/LoadImage.visible = false
+	$FileButtons/ImportPNGIMG.visible = false
+	$FileButtons/ShowHex.visible = false
+	$FileButtons/SavePNG.visible = false
 		
 	var texture = ProjManager.getPaletteTexture()
 	$PLTPanel/PaletteTexture.texture = texture
@@ -67,15 +72,19 @@ func close() -> void:
 
 func importFile(path: String) -> void:
 	if (importFlag == importEnum.JASC):
-		importFlag = importEnum.NONE
 		ProjManager.importJascPal(path)
+		self.activate()
 	elif (importFlag == importEnum.PNGPAL):
-		importFlag = importEnum.NONE
 		ProjManager.importPngPal(path)
+		self.activate()
+	elif (importFlag == importEnum.PNGIMG):
+		var texture = ProjManager.importPngImg(path)
+		$ImageTexture.texture = texture
+		$ImageTexture.visible = true
 	else:
 		ProjManager.importFile(path)
+	importFlag = importEnum.NONE
 	$FileDialog.clear_filters()
-	self.activate()
 	
 func goto() -> void:
 	var position = $Hex/LineEdit.text.hex_to_int() + ($Hex/LineEdit.text.hex_to_int() / 2)
@@ -92,11 +101,26 @@ func loadPalette() -> void:
 	$PLTPanel/PaletteTexture.texture = texture
 	$PLTPanel/PaletteLabel.text = ProjManager.myPalettePath
 
+func swapToHex() -> void:
+	$ImageTexture.visible = false
+	$Hex.visible = true
+	$FileButtons/LoadImage.visible = true
+	$FileButtons/ImportPNGIMG.visible = false
+	$FileButtons/ShowHex.visible = false
+	$FileButtons/SavePNG.visible = false
+
 func loadImage() -> void:
 	var texture = ProjManager.loadImage()
 	$Hex.visible = false
 	$ImageTexture.texture = texture
 	$ImageTexture.visible = true
+	$FileButtons/LoadImage.visible = false
+	$FileButtons/ShowHex.visible = true
+	$FileButtons/ImportPNGIMG.visible = true
+	$FileButtons/SavePNG.visible = true
+	
+func saveImage() -> void:
+	ProjManager.exportImage()
 
 func exportPalette() -> void:
 	ProjManager.exportJascPal()
@@ -111,3 +135,7 @@ func importPngPal() -> void:
 	$FileDialog.add_filter("*.png")
 	openFileImport()
 	
+func importPngImage() -> void:
+	importFlag = importEnum.PNGIMG
+	$FileDialog.add_filter("*.png")
+	openFileImport()

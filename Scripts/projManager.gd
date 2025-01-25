@@ -79,49 +79,21 @@ func loadNarcFile(index: int) -> void:
 	fileSwapped()
 
 func exportFile() -> void:
-	if (!FileAccess.file_exists(ProjPath.path_join("exported"))):
-		DirAccess.make_dir_absolute(ProjPath.path_join("exported"))
-		
-	var exportPath: String = ProjPath.path_join("exported").path_join(myFileName)
-	var i: int = 0
-	while(FileAccess.file_exists(exportPath)):
-		var extraName: String = myFileName.get_basename() + "_" + str(i) + "." + myFileName.get_extension()
-		exportPath = ProjPath.path_join("exported").path_join(extraName)
-		i += 1
-	
-	var expFile: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
-	expFile.store_buffer(myFile)
-	expFile.close()
+	print("Generic File Export")
+	exportGeneric(myFileName, myFile)
 	
 func importFile(path: String) -> void:
-	if (myFilePath == "NARC"):
-		myNarc.files[myFileIndex] = FileAccess.get_file_as_bytes(path)
-		myNarc.pack(NarcPath, true)
-		myFile = myNarc.files[myFileIndex]
-	else:
-		myFile = FileAccess.get_file_as_bytes(path)
-		var writer = FileAccess.open(myFilePath, FileAccess.WRITE)
-		writer.store_buffer(myFile)
-		writer.close()
+	writeGeneric(FileAccess.get_file_as_bytes(path))
 	fileSwapped()
 
 func exportJascPal() -> void:
-	if (!FileAccess.file_exists(ProjPath.path_join("exported"))):
-		DirAccess.make_dir_absolute(ProjPath.path_join("exported"))
-		
-	var expFileName: String = myFileName.get_file().get_basename()
-	var exportPath: String = ProjPath.path_join("exported").path_join(expFileName) + ".pal"
-	var i: int = 0
-	while(FileAccess.file_exists(exportPath)):
-		var extraName: String = expFileName + "_" + str(i) + ".pal"
-		exportPath = ProjPath.path_join("exported").path_join(extraName)
-		i += 1
-	
-	var expFile: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
 	var expPalette = FileFormats.Palette.new()
 	expPalette.initFromBytes(myFile)
 	var jascStrings = expPalette.toJascPal()
-	i = 0
+	
+	var exportPath = initExport(myFileName, ".pal")
+	var expFile: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
+	var i = 0
 	while (i < jascStrings.size()):
 		expFile.store_line(jascStrings[i])
 		i += 1
@@ -132,51 +104,24 @@ func importJascPal(path: String) -> void:
 	var jascText: PackedStringArray = FileAccess.get_file_as_string(path).split("\n")
 	newPalette.initFromJasc(jascText)
 	myPalette = newPalette
-	if (myFilePath == "NARC"):
-		myNarc.files[myFileIndex] = myPalette.toBytes()
-		myNarc.pack(NarcPath, true)
-		myFile = myNarc.files[myFileIndex]
-	else:
-		myFile = myPalette.toBytes()
-		var writer = FileAccess.open(myFilePath, FileAccess.WRITE)
-		writer.store_buffer(myFile)
-		writer.close()
+	writeGeneric(myPalette.toBytes())
 	fileSwapped()
 
 func importPngPal(path: String) -> void:
 	var idxImage: FileFormats.IndexedImage = FileFormats.IndexedImage.new()
-	idxImage.initFromPNG(path, true)
+	idxImage.fromPNG(FileAccess.get_file_as_bytes(path))
 	myPalette = idxImage.myPalette
-	if (myFilePath == "NARC"):
-		myNarc.files[myFileIndex] = myPalette.toBytes()
-		myNarc.pack(NarcPath, true)
-		myFile = myNarc.files[myFileIndex]
-	else:
-		myFile = myPalette.toBytes()
-		var writer = FileAccess.open(myFilePath, FileAccess.WRITE)
-		writer.store_buffer(myFile)
-		writer.close()
+	writeGeneric(myPalette.toBytes())
 	fileSwapped()
-	pass
 
 func importPngImg(path: String) -> ImageTexture:
-	var idxImage: FileFormats.IndexedImage = FileFormats.IndexedImage.new()
-	idxImage.initFromPNG(path)
 	var ncgrParams = myImage.myParams
-	myImage = idxImage
+	myImage = FileFormats.IndexedImage.new()
+	myImage.fromPNG(FileAccess.get_file_as_bytes(path))
 	print("Starting NCGR Bytes")
-	if (myFilePath == "NARC"):
-		myNarc.files[myFileIndex] = myImage.toBytesNCGR(ncgrParams)
-		myNarc.pack(NarcPath, true)
-		myFile = myNarc.files[myFileIndex]
-	else:
-		myFile = myImage.toBytesNCGR(ncgrParams)
-		var writer = FileAccess.open(myFilePath, FileAccess.WRITE)
-		writer.store_buffer(myFile)
-		writer.close()
-	idxImage.updatePalette(myPalette)
-	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.toImage())
-	return myTexture
+	writeGeneric(myImage.toNCGR(ncgrParams))
+	myImage.updatePalette(myPalette)
+	return ImageTexture.create_from_image(myImage.myImage)
 
 func duplicateFile() -> void:
 	if (myFilePath == "NARC"):
@@ -201,31 +146,19 @@ func fileSwapped() -> void:
 	myImage = null
 
 func loadImage() -> ImageTexture:
-	if (!FileFormats.IndexedImage.isNCGR(myFile)):
+	if (!FileFormats.NCGR.isNCGR(myFile)):
 		print("Not an image!")
 		return null
 	myImage = FileFormats.IndexedImage.new()
-	myImage.myPalette = myPalette
-	myImage.initFromNCGR(myFile)
-	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.toImage())
+	myImage.fromNCGR(myFile, myPalette)
+	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.myImage)
 	return myTexture
 
 func exportImage() -> void:
-	if (!FileAccess.file_exists(ProjPath.path_join("exported"))):
-		DirAccess.make_dir_absolute(ProjPath.path_join("exported"))
 	if (myImage == null):
 		print("No loaded image to export!")
 		return
-	var expFileName: String = myFileName.get_file().get_basename()
-	var exportPath: String = ProjPath.path_join("exported").path_join(expFileName) + ".png"
-	var i: int = 0
-	while(FileAccess.file_exists(exportPath)):
-		var extraName: String = expFileName + "_" + str(i) + ".png"
-		exportPath = ProjPath.path_join("exported").path_join(extraName)
-		i += 1
-	var f: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
-	f.store_buffer(myImage.saveIndexedPNG())
-	f.close()
+	exportGeneric(myFileName, myImage.toPNG(), ".png")
 	
 
 func getImageTexture() -> ImageTexture:
@@ -234,3 +167,38 @@ func getImageTexture() -> ImageTexture:
 		return myTexture
 	return null
 	
+func exportGeneric(fileName: String, fileBytes: PackedByteArray, extension: String = "NONE"):
+	var exportPath = initExport(fileName, extension)
+	var f: FileAccess = FileAccess.open(exportPath, FileAccess.WRITE)
+	f.store_buffer(fileBytes)
+	f.close()
+	
+func initExport(fileName: String, extension: String) -> String:
+	# Create Exports folder if not already exists
+	if (!FileAccess.file_exists(ProjPath.path_join("exported"))):
+		DirAccess.make_dir_absolute(ProjPath.path_join("exported"))
+	
+	if (extension == "NONE"):
+		extension = "." + fileName.get_extension()
+	
+	# Adjust the filename to not overwrite a previous export
+	var expFileName: String = fileName.get_file().get_basename()
+	var exportPath: String = ProjPath.path_join("exported").path_join(expFileName) + extension
+	var i: int = 0
+	while(FileAccess.file_exists(exportPath)):
+		var extraName: String = expFileName + "_" + str(i) + extension
+		exportPath = ProjPath.path_join("exported").path_join(extraName)
+		i += 1
+	
+	return exportPath
+
+func writeGeneric(fileBytes: PackedByteArray):
+	if (myFilePath == "NARC"):
+		myNarc.files[myFileIndex] = fileBytes
+		myNarc.pack(NarcPath, true)
+		myFile = myNarc.files[myFileIndex]
+	else:
+		myFile = fileBytes
+		var writer = FileAccess.open(myFilePath, FileAccess.WRITE)
+		writer.store_buffer(myFile)
+		writer.close()

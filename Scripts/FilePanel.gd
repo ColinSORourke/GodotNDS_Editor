@@ -87,9 +87,9 @@ func importFile(path: String) -> void:
 	$FileDialog.clear_filters()
 	
 func goto() -> void:
-	var position = $Hex/LineEdit.text.hex_to_int() + ($Hex/LineEdit.text.hex_to_int() / 2)
-	$Hex/HexDisplay.select(position/ 24, position % 24, position / 24, position % 24 + 4, 0)
-	$Hex/HexDisplay.scroll_vertical = position/ 24
+	var position = $Hex/LineEdit.text.hex_to_int()
+	$Hex/HexDisplay.select(position/8, position%8 * 3, position/8, position%8 * 3 + 2, 0)
+	$Hex/HexDisplay.scroll_vertical = position/8
 
 func duplicateFile() -> void:
 	ProjManager.duplicateFile()

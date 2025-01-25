@@ -233,6 +233,7 @@ text = "Cancel
 "
 
 [node name="FilePanel" type="Panel" parent="."]
+visible = false
 layout_mode = 0
 offset_left = 440.0
 offset_top = 232.0

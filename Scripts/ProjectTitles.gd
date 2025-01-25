@@ -5,3 +5,4 @@ extends TextureRect
 func _ready() -> void:
 	$ProjectTitle.text = ProjManager.ProjName
 	$GameTitle.text = ProjManager.ProjHeader.gameTitle
+	self.texture = ProjManager.bannerImage()

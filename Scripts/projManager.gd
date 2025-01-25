@@ -8,6 +8,7 @@ var HeaderPath: String = "Placeholder"
 
 var ProjRoot: NdsGd.NitroDirectory = null
 var RootPath: String = "Placeholder"
+var bannerIcon: Image = null
 
 var myNarc: NdsGd.NitroArchive = null
 var NarcPath: String = "Placeholder"
@@ -38,6 +39,48 @@ func iscompArm9() -> void:
 	# ERROR NOTE: I am not 100% sure this check is accurate all of the time?
 		# I am basing it on a comment from NDSPY that _DetectAppendData returns none if the file doesn't seem to be compressed.
 	arm9Comp = Compression.checkCompressed(ProjPath.path_join("unpacked/arm9.bin"))
+
+func bannerImage() -> ImageTexture:
+	var bannerBytes = FileAccess.get_file_as_bytes(ProjPath.path_join("unpacked/banner.bin"))
+	var bannerPalette = FileFormats.Palette.new()
+	var pltBytes = bannerBytes.slice(0x220, 0x240)
+	var i = 0
+	while(i < 16):
+		bannerPalette.colors.append(FileFormats.Palette.bgr555toColor(pltBytes[i*2], pltBytes[i*2+1]))
+		i += 1
+	var iconBytes = bannerBytes.slice(0x020, 0x220)
+	bannerIcon = Image.create_empty(32, 32, false, Image.FORMAT_RGBA8)
+	i = 0
+	var idx = 0
+	var chunkMan: FileFormats.NCGR.ChunkManager = FileFormats.NCGR.ChunkManager.new(1, 1)
+	var chunksWide: int = 4
+	var pitch: int = 4
+	print("Entering Loop")
+	while(i < 16):
+		var j = 0
+		while(j < 8):
+			var idxComponentY = chunkMan.getComponentY(8, j)
+			var k = 0
+			while (k < 4):
+				var idxComponentX: int = chunkMan.getComponentX(4, k)
+				var destX: int = idxComponentX * 2
+				var destY: int = idxComponentY 
+				var pixelPair: int = iconBytes[idx]
+				idx += 1
+				var pixelLeft: int = pixelPair & 0xF
+				var pixelRight: int = pixelPair >> 4 & 0xF
+				
+				if (destX +  1 >= 32 || destY >= 32):
+					print("Something has gone horribly wrong")
+					return
+				
+				bannerIcon.set_pixel(destX, destY, bannerPalette.colors[pixelLeft])
+				bannerIcon.set_pixel(destX + 1, destY, bannerPalette.colors[pixelRight])
+				k += 1
+			j += 1
+		chunkMan.advance(chunksWide)
+		i += 1
+	return ImageTexture.create_from_image(bannerIcon)
 
 func overlaysCompressed() -> void:
 	var overlayDir: DirAccess = DirAccess.open(ProjPath.path_join("unpacked/overlays"))

@@ -291,6 +291,7 @@ class NCGR:
 		return arr
 
 	func convertFromScannedFBPP(image: IndexedImage) -> void:
+		print("Loading Scanned 4BPP")
 		image.width = nTilesX
 		image.height = nTilesY
 		image.emptyPixels()
@@ -317,6 +318,7 @@ class NCGR:
 			i += 1
 	
 	func convertFromScannedEBPP(image: IndexedImage) -> void:
+		print("Loading Scanned 8BPP")
 		image.width = nTilesX
 		image.height = nTilesY
 		image.emptyPixels()
@@ -376,6 +378,7 @@ class NCGR:
 			print("CurrChunk: " + str(ChunkStartX) +","+ str(ChunkStartY))
 	
 	func convertFromTileFBPP(image: IndexedImage) -> void:
+		print("Loading Tiled 4BPP")
 		image.width = nTilesX
 		image.height = nTilesY
 		image.emptyPixels()
@@ -416,6 +419,7 @@ class NCGR:
 			i += 1
 	
 	func convertFromTileEBPP(image: IndexedImage) -> void:
+		print("Loading Tiled 8BPP")
 		image.width = nTilesX
 		image.height = nTilesY
 		image.emptyPixels()
@@ -492,7 +496,7 @@ class NCGR:
 		return output
 
 	func convertToScannedFBPP(image: IndexedImage) -> PackedByteArray:
-		print("Scanned Four")
+		print("Writing Scanned 4BPP")
 		var flatPix: PackedByteArray = image.flatPixels()
 		var data: Array[int] = []
 		var pixInd = 0
@@ -504,12 +508,12 @@ class NCGR:
 		return encrypt(data)
 		
 	func convertToScannedEBPP(image: IndexedImage) -> PackedByteArray:
-		print("Scanned Eight")
+		print("Writing Scanned 8BPP")
 		var data: Array[int] = image.flatPixels()
 		return encrypt(data)
 
 	func convertToTileFBPP(image: IndexedImage) -> PackedByteArray:
-		print("Tile Four")
+		print("Writing Tiled 4BPP")
 		var chunkMan: ChunkManager = ChunkManager.new(1,1)
 		var chunksWide = image.width/8 / chunkMan.cols
 		var pitch: int = image.width/2
@@ -538,7 +542,7 @@ class NCGR:
 		return dest
 
 	func convertToTileEBPP(image: IndexedImage) -> PackedByteArray:
-		print("Tile Eight")
+		print("Writing Tiled 8BPP")
 		var chunkMan: ChunkManager = ChunkManager.new(1,1)
 		var chunksWide = image.width/8 / chunkMan.cols
 		var pitch: int = image.width/2
@@ -575,397 +579,9 @@ class NCGR:
 		numTiles = nTilesX * nTilesY
 		bitDepth = bpp
 		encVal = enc
-	
-
+		
 # Indexed Image
 # https://github.com/turtleisaac/Nds4j/blob/main/src/main/java/io/github/turtleisaac/nds4j/images/IndexedImage.java
-#class IndexedImageOld:
-	#const paletteChunkHeader: PackedByteArray = [0x50,0x4C,0x54,0x45]
-	#const dataChunkHeader: PackedByteArray = [0x49,0x44,0x41,0x54]
-	#const imageChunkHeader: PackedByteArray = [0x49,0x48,0x44,0x52]
-	#const endChunkHeader: PackedByteArray = [0x49,0x45,0x4E,0x44]
-	#const PNGHeader: PackedByteArray = [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A]
-	#const ncgrMagic: int = 0x4E434752 # "NCGR"
-	#const charMagic: int = 0x43484152 # "CHAR"
-	#
-	#var myHeader: ntrHeader
-	#
-	#var myBytes: PackedByteArray
-	#var myImage: Image
-	#var imageBytes: PackedByteArray
-	#var myPixels: Array[PackedByteArray]
-	#
-	#var width: int
-	#var height: int
-	#var myPalette: Palette
-	#
-	#class NCGRParams:
-		#var encKey: int
-		#var scanned: bool
-		#var mappingType: int
-		#var vram: bool
-		#var frontToBack: bool
-	#
-	#var myParams: NCGRParams
-	#
-	#static func isNCGR(bytes: PackedByteArray) -> bool:
-		#var header = ntrHeader.new()
-		#header.process(bytes)
-		#return header.magic == IndexedImage.ncgrMagic
-	#
-	#func setPixel(x: int, y: int, p: int) -> void:
-		#myImage.set_pixel(x, y, myPalette.colors[p])
-		#myPixels[y][x] = p
-	#
-	#func emptyPixels() -> void:
-		#myImage = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
-		#myPixels = []
-		#var i: int = 0
-		#while (i < height):
-			#var temp = PackedByteArray([])
-			#temp.resize(width)
-			#myPixels.append(temp)
-			#i += 1
-		#
-	#func renderImagePixels() -> void:
-		#var y = 0
-		#while(y < height):
-			#var x = 0
-			#while(x < width):
-				#var pixInd = myPixels[y][x]
-				#myImage.set_pixel(x, y, myPalette.colors[pixInd])
-				#x += 1
-			#y += 1
-	#
-	#func updatePalette(newPalette: Palette) -> void:
-		#myPalette = newPalette
-		#renderImagePixels()
-#
-	#func toImage() -> Image:
-		#return myImage
-	#
-	#func scanLines(bpp: int) -> PackedByteArray:
-		#var returnBytes: PackedByteArray = []
-		#var i = 0
-		#while (i < myPixels.size()):
-			#var scanline: PackedByteArray = myPixels[i]
-			#returnBytes.append(0) # Filter Method
-			#var j = 0
-			#while(j < scanline.size()):
-				#match bpp:
-					#8:
-						#returnBytes.append(scanline[j])
-						#j -= 1
-					#4:
-						#var byte = (scanline[j] << 4) | (scanline[j + 1] & 0xF)
-						#returnBytes.append(byte)
-					#2:
-						#var byte = (scanline[j] << 2) | ((scanline[j + 1] & 0x3) << 4)
-						#returnBytes.append(byte)
-				#j += 2
-			#i += 1
-		#return returnBytes
-	#
-	#func ncgrLines(bpp: int) -> Array[int]:
-		#var returnBytes: PackedByteArray = []
-		#var retArray: Array[int] = []
-		#var i = 0
-		#while (i < myPixels.size()):
-			#var scanline: PackedByteArray = myPixels[i]
-			#var j = 0
-			#while(j < scanline.size()):
-				#match bpp:
-					#8:
-						#returnBytes.append(scanline[j])
-						#j -= 1
-					#4:
-						#var byte = (scanline[j] & 0xF) | ((scanline[j + 1] & 0xF) << 4)
-						#returnBytes.append(byte)
-				#j += 2
-				#if(j % 4 == 0):
-					#var pixelInt:int = (returnBytes[-2]) | (returnBytes[-1] << 8)
-					#retArray.append(pixelInt)
-			#i += 1
-		#return retArray
-	#
-	#func initFromPNG(path: String, justPal: bool = false) -> void:
-		#var paletteIndex: int
-		#var dataIndex: int
-		#myBytes = FileAccess.get_file_as_bytes(path)
-		#if (myBytes.slice(0, 8) != PNGHeader):
-			#print("NOT A PNG")
-			#return
-		#
-		#var currInd = 0
-		#while (currInd < myBytes.size() - 4):
-			#var currFour: PackedByteArray = myBytes.slice(currInd, currInd + 4)
-			#if (currFour == paletteChunkHeader):
-				#paletteIndex = currInd
-			#if (currFour == dataChunkHeader):
-				#dataIndex = currInd
-			#if (currFour == endChunkHeader):
-				#break
-			#currInd += 1
-			#
-		#width = swapEndianInt32(myBytes.decode_u32(16))
-		#height = swapEndianInt32(myBytes.decode_u32(20))
-		#myPalette = Palette.new()
-		#
-		#myPalette.bitDepth = myBytes.decode_u8(24)
-		#var valid: bool = true && myBytes.decode_u8(25) == 3
-		#valid = valid && myBytes.decode_u8(26) == 0
-		#valid = valid && myBytes.decode_u8(27) == 0
-		#valid = valid && myBytes.decode_u8(28) <= 1
-		#
-		#if (!valid):
-			#print("PNG IMPROPERLY FORMATTED")
-			#return
-	#
-		#var chunkLength: int = swapEndianInt32(myBytes.decode_u32(paletteIndex - 4))
-		#var i = 0
-		#while (i < chunkLength/3):
-			#var nColor: Color = Color()
-			#var cVal: int = myBytes.decode_u8(paletteIndex + 4 + i*3)
-			#nColor.r8 = cVal
-			#cVal = myBytes.decode_u8(paletteIndex + 4 + i*3 + 1)
-			#nColor.g8 = cVal
-			#cVal = myBytes.decode_u8(paletteIndex + 4 + i*3 + 2)
-			#nColor.b8 = cVal
-			#myPalette.colors.append(nColor)
-			#i += 1
-	#
-		#if (justPal):
-			## Done here!
-			#return
-		#
-		#chunkLength = swapEndianInt32(myBytes.decode_u32(dataIndex-4))
-		#var toDecomp: PackedByteArray = myBytes.slice(dataIndex + 4, dataIndex + 4 + chunkLength)
-		#var decompSize: int = width*height/2 + width
-		#if (myPalette.bitDepth == 8):
-			#decompSize = width*height + width
-		#imageBytes = toDecomp.decompress(decompSize, 1)
-		#
-	#func createScanLines(imageData: PackedByteArray, bpp: int) -> void:
-		#var numBytes: int = ceil(bpp*width/8)
-		#var y: int = 0
-		#var idx: int = 0
-		#while(y < height):
-			#var scanLine: PackedByteArray = imageData.slice(idx + 1, idx + 1 + numBytes)
-			#idx += numBytes+1
-			#var x: int = 0
-			#while (x < scanLine.size()):
-				#match bpp:
-					#2:
-						#var section: int = (scanLine[x] >> 4) & 0xf
-						#myPixels[y].append((section >> 2) & 0x3)
-						#myPixels[y].append(section & 0x3)
-					#4:
-						#myPixels[y].append((scanLine[x] >> 4) & 0xf)
-						#myPixels[y].append((scanLine[x]) & 0xf)
-					#8:
-						#myPixels[y].append(scanLine[x])
-				#x += 1
-			#y += 1
-	#
-	#func createTiles(imageData: PackedByteArray, bpp: int) -> void:
-		#var y: int = 0
-		#var idx: int = 1
-		#while (y < height):
-			#var x: int = 0
-			#while (x < width):
-				#myPixels[y][x] = imageData[idx]
-				#idx += 1
-				#x += 1
-			#idx += 1
-			#y += 1
-	#
-	#func initFromNCGR(bytes: PackedByteArray):
-		#var myNCGR = NCGR.new()
-		#myNCGR.process(bytes)
-		#myParams = NCGRParams.new()
-		#myParams.scanned = myNCGR.scanned
-		#myParams.mappingType = myNCGR.mappingType
-		#myParams.vram = myNCGR.vram
-		#myParams.frontToBack = myNCGR.frontToBack
-		#myNCGR.setImage(self)
-	#
-	#func saveIndexedPNG() -> PackedByteArray:
-		#var imageHead: PackedByteArray = []
-		#imageHead.append_array(imageChunkHeader)
-		#var bpp: int = 2
-		#if(myPalette.colors.size() > 16):
-			#bpp = 8
-		#elif(myPalette.colors.size() > 4):
-			#bpp = 4
-		#imageHead.resize(imageHead.size() + 8)
-		#imageHead.encode_u32(4, swapEndianInt32(width))
-		#imageHead.encode_u32(8, swapEndianInt32(height))
-		#imageHead.append_array([bpp, 3, 0, 0, 0])
-		#
-		#var paletteBuff: PackedByteArray = []
-		#paletteBuff.append_array(paletteChunkHeader)
-		#var i = 0
-		#while (i < myPalette.colors.size()):
-			#paletteBuff.append_array([myPalette.colors[i].r8, myPalette.colors[i].g8, myPalette.colors[i].b8])
-			#i += 1
-		#
-		#var dataBuff: PackedByteArray = []
-		#dataBuff.append_array(dataChunkHeader)
-		#var data = scanLines(bpp)
-		#dataBuff.append_array(data.compress(1))
-		#
-		#var returnArray: PackedByteArray = []
-		#returnArray.append_array(PNGHeader)
-		#
-		#returnArray.resize(returnArray.size() + 4)
-		#returnArray.encode_u32(returnArray.size() - 4, swapEndianInt32(imageHead.size()-4))
-		#returnArray.append_array(imageHead)
-		#returnArray.resize(returnArray.size() + 4)
-		#returnArray.encode_u32(returnArray.size() - 4, swapEndianInt32(NdsGd.CRC.calculateCRC32(imageHead)))
-		#
-		#returnArray.resize(returnArray.size() + 4)
-		#returnArray.encode_u32(returnArray.size() - 4, swapEndianInt32(paletteBuff.size()-4))
-		#returnArray.append_array(paletteBuff)
-		#returnArray.resize(returnArray.size() + 4)
-		#returnArray.encode_u32(returnArray.size() - 4, swapEndianInt32(NdsGd.CRC.calculateCRC32(paletteBuff)))
-		#
-		#returnArray.resize(returnArray.size() + 4)
-		#returnArray.encode_u32(returnArray.size() - 4, swapEndianInt32(dataBuff.size()-4))
-		#returnArray.append_array(dataBuff)
-		#returnArray.resize(returnArray.size() + 4)
-		#returnArray.encode_u32(returnArray.size() - 4, swapEndianInt32(NdsGd.CRC.calculateCRC32(dataBuff)))
-		#
-		#returnArray.resize(returnArray.size() + 4)
-		#returnArray.encode_u32(returnArray.size() - 4, swapEndianInt32(endChunkHeader.size()-4))
-		#returnArray.append_array(endChunkHeader)
-		#returnArray.resize(returnArray.size() + 4)
-		#returnArray.encode_u32(returnArray.size() - 4, swapEndianInt32(NdsGd.CRC.calculateCRC32(endChunkHeader)))
-		#
-		#return returnArray
-		#
-	#func toBytesNCGR(p: NCGRParams) -> PackedByteArray:
-		#var myNCGR: NCGR = NCGR.new()
-		#myParams = p
-		#myNCGR.initTiles(width, height, myPalette.bitDepth, p.encKey)
-		#var pixelBuf: PackedByteArray
-		#if (p.scanned && myPalette.bitDepth == 8):
-			#emptyPixels()
-			#createScanLines(imageBytes, myPalette.bitDepth)
-			#pixelBuf = myNCGR.convertToScannedEBPP(self)
-		#elif (p.scanned):
-			#emptyPixels()
-			#createScanLines(imageBytes, myPalette.bitDepth)
-			#pixelBuf = myNCGR.convertToScannedFBPP(self)
-		#elif(myPalette.bitDepth == 8):
-			#emptyPixels()
-			#createTiles(imageBytes, myPalette.bitDepth)
-			#pixelBuf = myNCGR.convertToTileEBPP(self)
-		#else:
-			#emptyPixels()
-			#createTiles(imageBytes, myPalette.bitDepth)
-			#pixelBuf = myNCGR.convertToTileFBPP(self)
-			#
-		#var retBytes: PackedByteArray = []
-		#retBytes.resize(16)
-		#retBytes.encode_u32(0, ncgrMagic)
-		#retBytes.encode_u16(4, 0xFEFF)
-		#retBytes.encode_u16(6, 0x0100)
-		#retBytes.encode_u32(8, myNCGR.tileSize * myNCGR.numTiles + 0x30)
-		#retBytes.encode_u16(12, 0x10)
-		#retBytes.encode_u16(14, 1)
-		#retBytes.append_array(NCGR.charHeader)
-		#retBytes.encode_u32(20, myNCGR.tileSize * myNCGR.numTiles + 0x20)
-		#if (p.mappingType == 32):
-			#retBytes.encode_u16(24, myNCGR.nTilesY)
-			#retBytes.encode_u16(26, myNCGR.nTilesX)
-		#else:
-			#retBytes.encode_u32(24, 0xFFFFFFFF)
-			#retBytes.encode_u8(28, 0x1)
-		#
-		#if (myPalette.bitDepth == 8):
-			#retBytes.encode_u8(28, 4)
-		#else:
-			#retBytes.encode_u8(28, 3)
-			#
-		#var val: int = 0
-		#if (p.mappingType != 0):
-			#match p.mappingType:
-				#64:
-					#val = 0x10
-				#128:
-					#val = 0x20
-				#256:
-					#val = 0x30
-			#retBytes.encode_u16(34, val)
-		#
-		#if (p.scanned):
-			#retBytes.encode_u8(36, 1)
-		#else:
-			#retBytes.encode_u8(36, 0)
-		#
-		#if (p.vram):
-			#retBytes.encode_u8(37, 1)
-		#else:
-			#retBytes.encode_u8(37, 0)
-		#
-		#retBytes.encode_u32(40, pixelBuf.size())
-		#retBytes.append_array(pixelBuf)
-		#
-		#return retBytes
-	#
-	#static func swapEndianInt32(i: int) -> int:
-		#var b1 = (i & 0xFF000000) >> 24
-		#var b2 = (i & 0x00FF0000) >> 8
-		#var b3 = (i & 0x0000FF00) << 8
-		#var b4 = (i & 0x000000FF) << 24
-		#return b1 | b2 | b3 | b4
-
-	func headerBytes() -> PackedByteArray:
-		var retBytes: PackedByteArray = []
-		retBytes.resize(16)
-		retBytes.encode_u32(0, ncgrMagic)
-		retBytes.encode_u16(4, 0xFEFF)
-		retBytes.encode_u16(6, 0x0100)
-		retBytes.encode_u32(8, tileSize * numTiles + 0x30)
-		retBytes.encode_u16(12, 0x10)
-		retBytes.encode_u16(14, 1)
-		retBytes.append_array(NCGR.charHeader)
-		retBytes.encode_u32(20, tileSize * numTiles + 0x20)
-		if (mappingType == 32):
-			retBytes.encode_u16(24, nTilesY)
-			retBytes.encode_u16(26, nTilesX)
-		else:
-			retBytes.encode_u32(24, 0xFFFFFFFF)
-			retBytes.encode_u8(28, 0x1)
-		
-		if (bitDepth == 8):
-			retBytes.encode_u8(28, 4)
-		else:
-			retBytes.encode_u8(28, 3)
-			
-		var val: int = 0
-		if (mappingType != 0):
-			match mappingType:
-				64:
-					val = 0x10
-				128:
-					val = 0x20
-				256:
-					val = 0x30
-			retBytes.encode_u16(34, val)
-		
-		if (scanned):
-			retBytes.encode_u8(36, 1)
-		else:
-			retBytes.encode_u8(36, 0)
-		
-		if (vram):
-			retBytes.encode_u8(37, 1)
-		else:
-			retBytes.encode_u8(37, 0)
-			
-		return retBytes
-
 class IndexedImage:
 	const paletteChunkHeader: PackedByteArray = [0x50,0x4C,0x54,0x45]
 	const dataChunkHeader: PackedByteArray = [0x49,0x44,0x41,0x54]

@@ -1,9 +1,9 @@
 [gd_scene load_steps=11 format=3 uid="uid://dokxbayunkgwo"]
 
 [ext_resource type="Texture2D" uid="uid://b2kpqy7l0eoni" path="res://Assets/icon.svg" id="1_1gjae"]
-[ext_resource type="Script" path="res://Scripts/InitMenu.gd" id="2_ioxfu"]
+[ext_resource type="Script" uid="uid://db08bce7ye3vo" path="res://Scripts/InitMenu.gd" id="2_ioxfu"]
 [ext_resource type="Theme" uid="uid://08hv88tc1qqh" path="res://Assets/ApfelTheme.tres" id="2_ksiif"]
-[ext_resource type="Script" path="res://Scripts/create_proj.gd" id="2_qxyfr"]
+[ext_resource type="Script" uid="uid://bjf6aw3r5hgly" path="res://Scripts/create_proj.gd" id="2_qxyfr"]
 [ext_resource type="StyleBox" uid="uid://co1mcfxjjtg57" path="res://Assets/buttonSBoxClick.tres" id="3_0tcee"]
 [ext_resource type="StyleBox" uid="uid://jjq6i5iwgye" path="res://Assets/buttonSBoxNorm.tres" id="4_7btr2"]
 

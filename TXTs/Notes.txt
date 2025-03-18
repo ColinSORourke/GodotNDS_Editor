@@ -5,3 +5,10 @@ Addresses
 	1064EC - Branch Subroutine
 	70ECE - 2A for #of Evolutions * 6
 	10051C - Start of Junk Items in Item Table
+
+----- HGSS File Tree -----
+https://docs.google.com/document/d/15YuxZpMmmuSDEcMa8chkjXWWgVPv-MlCELZK5lBx5EI/edit?tab=t.0 
+
+----- JavaScript BTX Viewer -----
+https://github.com/scurest/BTXViewer/blob/master/viewer.html
+https://github.com/scurest/apicula

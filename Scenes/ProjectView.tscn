@@ -1,16 +1,16 @@
 [gd_scene load_steps=17 format=3 uid="uid://bh1iuhvtvdnpg"]
 
-[ext_resource type="Script" path="res://Scripts/ProjectViewScene.gd" id="1_7jn5s"]
+[ext_resource type="Script" uid="uid://cdxfdgfg8flnc" path="res://Scripts/ProjectViewScene.gd" id="1_7jn5s"]
 [ext_resource type="Texture2D" uid="uid://b2kpqy7l0eoni" path="res://Assets/icon.svg" id="1_x08yx"]
-[ext_resource type="Script" path="res://Scripts/ProjectTitles.gd" id="2_dslyd"]
+[ext_resource type="Script" uid="uid://h0ifdm3eu0v7" path="res://Scripts/ProjectTitles.gd" id="2_dslyd"]
 [ext_resource type="Theme" uid="uid://08hv88tc1qqh" path="res://Assets/ApfelTheme.tres" id="3_6eryf"]
 [ext_resource type="StyleBox" uid="uid://co1mcfxjjtg57" path="res://Assets/buttonSBoxClick.tres" id="4_snj14"]
 [ext_resource type="StyleBox" uid="uid://jjq6i5iwgye" path="res://Assets/buttonSBoxNorm.tres" id="5_2bcqt"]
-[ext_resource type="Script" path="res://Scripts/FileTree.gd" id="7_b3xh0"]
-[ext_resource type="Script" path="res://Scripts/NarcTree.gd" id="8_yjs0q"]
-[ext_resource type="Script" path="res://Scripts/FilePanel.gd" id="9_oi2nf"]
+[ext_resource type="Script" uid="uid://br4pkntu5fsoh" path="res://Scripts/FileTree.gd" id="7_b3xh0"]
+[ext_resource type="Script" uid="uid://tyjmim2jqel3" path="res://Scripts/NarcTree.gd" id="8_yjs0q"]
+[ext_resource type="Script" uid="uid://bobe1iuq111kt" path="res://Scripts/FilePanel.gd" id="9_oi2nf"]
 [ext_resource type="Theme" uid="uid://b4t5ys64v27ey" path="res://Assets/MonoSpace.tres" id="10_7ser7"]
-[ext_resource type="Script" path="res://Scripts/hexLineEdit.gd" id="11_ba3dq"]
+[ext_resource type="Script" uid="uid://balcs5eyenli" path="res://Scripts/hexLineEdit.gd" id="11_ba3dq"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wcq0y"]
 border_width_left = 3
@@ -233,7 +233,6 @@ text = "Cancel
 "
 
 [node name="FilePanel" type="Panel" parent="."]
-visible = false
 layout_mode = 0
 offset_left = 440.0
 offset_top = 232.0
@@ -498,6 +497,7 @@ offset_left = 16.0
 offset_top = 88.0
 offset_right = 616.0
 offset_bottom = 688.0
+texture = ExtResource("1_x08yx")
 stretch_mode = 4
 
 [connection signal="pressed" from="Back" to="." method="back"]

@@ -196,6 +196,15 @@ func loadImage() -> ImageTexture:
 	myImage.fromNCGR(myFile, myPalette)
 	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.myImage)
 	return myTexture
+	
+func loadBtx() -> ImageTexture:
+	#if(!FileFormats.BTX.isBTX(myFile)):
+		#print("Not an BTX!")
+		#return null
+	myImage = FileFormats.IndexedImage.new()
+	#myImage.fromBTX(myFile)
+	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.region(0))
+	return myTexture
 
 func exportImage() -> void:
 	if (myImage == null):

@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://ci8iidly3i18f"]
 
 [ext_resource type="Texture2D" uid="uid://b2kpqy7l0eoni" path="res://Assets/icon.svg" id="1_xq0bs"]
-[ext_resource type="Script" path="res://Scripts/DiffChecker.gd" id="2_osq0j"]
+[ext_resource type="Script" uid="uid://d4lh00lgpiu2h" path="res://Scripts/DiffChecker.gd" id="2_osq0j"]
 [ext_resource type="Theme" uid="uid://08hv88tc1qqh" path="res://Assets/ApfelTheme.tres" id="3_41obg"]
 [ext_resource type="StyleBox" uid="uid://co1mcfxjjtg57" path="res://Assets/buttonSBoxClick.tres" id="4_o0gly"]
 [ext_resource type="StyleBox" uid="uid://jjq6i5iwgye" path="res://Assets/buttonSBoxNorm.tres" id="5_ft3xo"]

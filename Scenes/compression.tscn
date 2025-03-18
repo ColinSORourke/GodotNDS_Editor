@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://ccqh85ynnp5if"]
 
-[ext_resource type="Script" path="res://Scripts/BLZ.gd" id="1_lxepl"]
+[ext_resource type="Script" uid="uid://knnwfukyttnf" path="res://Scripts/BLZ.gd" id="1_lxepl"]
 
 [node name="Compression" type="Node"]
 script = ExtResource("1_lxepl")

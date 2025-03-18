@@ -595,6 +595,7 @@ class IndexedImage:
 	var height: int
 	var myPalette: Palette
 	var bpp: int
+	var regions: Vector3i = Vector3i(0, 0, 1)
 	
 	var myParams: NCGRParams
 	class NCGRParams:
@@ -603,6 +604,21 @@ class IndexedImage:
 		var mappingType: int
 		var vram: bool
 		var frontToBack: bool
+	
+	func region(r: int) -> Image:
+		if (r >= regions.z):
+			print("Bad Region Request")
+			return myImage
+		var startX = 0
+		var startY = 0
+		var i = 1
+		while (i < r):
+			startX += regions.x
+			if (startX >= width):
+				startX = 0
+				startY += regions.y
+			i += 1
+		return myImage.get_region(Rect2i(startX, startY, regions.x, regions.y))
 	
 	func emptyPixels() -> void:
 		myImage = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)

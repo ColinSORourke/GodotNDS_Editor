@@ -1,5 +1,6 @@
 extends Node
 
+@warning_ignore_start("integer_division")
 # MUCH OF THIS CODE IS NOT MY OWN ALGORITHMS
 # This is a port of a lot of excellent algorithms written by other cool people!
 # Including:
@@ -10,6 +11,7 @@ extends Node
 # Main Extract Function
 # https://github.com/JackHack96/jNdstool/src/main/java/nitro/ROM.java
 func extractROM(romPath: String, dirPath: String) -> void:
+	
 	var dir = DirAccess.open(dirPath)
 	
 	var romFile: FileAccess = FileAccess.open(romPath, FileAccess.READ)
@@ -20,8 +22,8 @@ func extractROM(romPath: String, dirPath: String) -> void:
 	var endOffsets: Dictionary
 	
 	romFile.seek(header.fatOffset)
-	
 	var i: int = 0
+	
 	while (i < header.fatSize / 8):
 		startOffsets[i] = romFile.get_32()
 		endOffsets[i] = romFile.get_32()
@@ -39,18 +41,17 @@ func extractROM(romPath: String, dirPath: String) -> void:
 	while (i < header.arm9OverlaySize / 0x20):
 		var overlayPath = dirPath.path_join("overlays").path_join("overlay_%04d.bin" % i)
 		if (!FileAccess.file_exists(overlayPath)):
-			var tmpWriter: FileAccess = FileAccess.open(overlayPath, 7)
+			var tmpWriter: FileAccess = FileAccess.open(overlayPath, FileAccess.WRITE_READ)
 			romFile.seek(startOffsets[i])
 			tmpWriter.store_buffer(romFile.get_buffer(endOffsets[i] - startOffsets[i]))
 			tmpWriter.close()
 		i += 1
-	
 	var arm7OvSize: int = header.arm7OverlaySize / 0x20
 	i = 0
 	while (i < arm7OvSize):
 		var overlayPath = dirPath.path_join("overlays").path_join("overlay_%04d.bin" % i)
 		if (!FileAccess.file_exists(overlayPath)):
-			var tmpWriter: FileAccess = FileAccess.open(overlayPath, 7)
+			var tmpWriter: FileAccess = FileAccess.open(overlayPath, FileAccess.READ_WRITE)
 			romFile.seek(startOffsets[i + arm7OvSize])
 			tmpWriter.store_buffer(romFile.get_buffer(endOffsets[i + arm7OvSize] - startOffsets[i + arm7OvSize]))
 			tmpWriter.close()
@@ -58,37 +59,37 @@ func extractROM(romPath: String, dirPath: String) -> void:
 	
 	if (!FileAccess.file_exists(dirPath.path_join("header.bin"))):
 		romFile.seek(0)
-		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("header.bin"), 7)
+		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("header.bin"), FileAccess.READ_WRITE)
 		tmpWriter.store_buffer(romFile.get_buffer(0x200))
 		tmpWriter.close()
 	
 	if (!FileAccess.file_exists(dirPath.path_join("arm9.bin"))):
 		romFile.seek(header.arm9RomOffset)
-		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("arm9.bin"), 7)
+		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("arm9.bin"), FileAccess.READ_WRITE)
 		tmpWriter.store_buffer(romFile.get_buffer(header.arm9Size))
 		tmpWriter.close()
 		
 	if (!FileAccess.file_exists(dirPath.path_join("arm9ovltable.bin"))):
 		romFile.seek(header.arm9OverlayOffset)
-		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("arm9ovltable.bin"), 7)
+		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("arm9ovltable.bin"), FileAccess.READ_WRITE)
 		tmpWriter.store_buffer(romFile.get_buffer(header.arm9OverlaySize))
 		tmpWriter.close()
 		
 	if (!FileAccess.file_exists(dirPath.path_join("arm7.bin"))):
 		romFile.seek(header.arm7RomOffset)
-		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("arm7.bin"), 7)
+		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("arm7.bin"), FileAccess.READ_WRITE)
 		tmpWriter.store_buffer(romFile.get_buffer(header.arm7Size))
 		tmpWriter.close()
 	
 	if (!FileAccess.file_exists(dirPath.path_join("arm7ovltable.bin"))):
 		romFile.seek(header.arm7OverlayOffset)
-		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("arm7ovltable.bin"), 7)
+		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("arm7ovltable.bin"), FileAccess.READ_WRITE)
 		tmpWriter.store_buffer(romFile.get_buffer(header.arm7OverlaySize))
 		tmpWriter.close()
 		
 	if (!FileAccess.file_exists(dirPath.path_join("banner.bin"))):
 		romFile.seek(header.iconOffset)
-		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("banner.bin"), 7)
+		var tmpWriter: FileAccess = FileAccess.open(dirPath.path_join("banner.bin"), FileAccess.READ_WRITE)
 		tmpWriter.store_buffer(romFile.get_buffer(0x840))
 		tmpWriter.close()
 	
@@ -747,7 +748,7 @@ class NitroDirectory extends NitroParent:
 		while (i < rootDir.fileList.size()):
 			var f: NitroFile = rootDir.fileList[i]
 			if (!FileAccess.file_exists(currPath.path_join( f.name ) ) ):
-				var newFile = FileAccess.open(currPath.path_join( f.name ), 7)
+				var newFile = FileAccess.open(currPath.path_join( f.name ), FileAccess.READ_WRITE)
 				romFile.seek(f.offset)
 				newFile.store_buffer(romFile.get_buffer(f.size))
 				newFile.close()

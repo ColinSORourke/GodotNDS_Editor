@@ -1,8 +1,8 @@
 extends Node
-
+@warning_ignore_start("integer_division")
 # NTR Header
 class ntrHeader:
-	var magic: int
+	var Stamp: int
 	var constant: int
 	var fileSize: int
 	var headerSize: int
@@ -10,7 +10,7 @@ class ntrHeader:
 	const bufferLength: int = 16
 	
 	func process(bytes: PackedByteArray) -> void:
-		magic = bytes.decode_u32(0)
+		Stamp = bytes.decode_u32(0)
 		constant = bytes.decode_u32(4)
 		fileSize = bytes.decode_u32(8)
 		headerSize = bytes.decode_u16(12)
@@ -19,7 +19,7 @@ class ntrHeader:
 	func write() -> PackedByteArray:
 		var retBytes: PackedByteArray = []
 		retBytes.resize(16)
-		retBytes.encode_u32(0, magic)
+		retBytes.encode_u32(0, Stamp)
 		retBytes.encode_u32(4, constant)
 		retBytes.encode_u32(8, fileSize)
 		retBytes.encode_u16(12, headerSize)
@@ -29,13 +29,13 @@ class ntrHeader:
 # NCLR, NPCR Palette
 # https://github.com/turtleisaac/Nds4j/blob/main/src/main/java/io/github/turtleisaac/nds4j/images/Palette.java
 class Palette:
-	const TTLPMagic = 0x504C5454
+	const TTLPStamp = 0x504C5454
 	
-	const NCLRMagic = 0x4E434C52
+	const NCLRStamp = 0x4E434C52
 	const palHeader: PackedByteArray = [0x54, 0x54, 0x4C, 0x50, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00]
 	const IRColor = Color(72, 144, 160)
 	
-	var magic: int
+	var Stamp: int
 	var sectionSize: int
 	var bitDepth: int
 	var compNum: int
@@ -63,10 +63,10 @@ class Palette:
 		bitDepth = 4
 		
 	func initFromBytes(bytes: PackedByteArray) -> void:
-		magic = bytes.decode_u32(16)
-		if (magic != TTLPMagic):
-			print("Invalid Palette, wrong magic")
-			print(String.num_int64(magic, 16))
+		Stamp = bytes.decode_u32(16)
+		if (Stamp != TTLPStamp):
+			print("Invalid Palette, wrong Stamp")
+			print(String.num_int64(Stamp, 16))
 			return
 		if (bytes.size() % 2 != 0):
 			print("Invalid palette, File Size not multiple of two")
@@ -110,11 +110,25 @@ class Palette:
 			colors.append(nColor)
 			i += 1
 		
+	func initFromBTX(bytesA: PackedByteArray, bytesB: PackedByteArray) -> void:
+		var offset: int = bytesA.decode_u16(0) << 3
+		var data: PackedByteArray = bytesB.slice(offset)
+		
+		var i: int = 0
+		while (i < data.size() - 1):
+			var rgb: int = data[i] | (data[i + 1] << 8)
+			var newColor = Color()
+			newColor.r8 = (rgb & 0x1f) << 3
+			newColor.g8 = ((rgb >> 5) & 0x1f) << 3
+			newColor.b8 = ((rgb >> 10) & 0x1f) << 3
+			colors.append(newColor)
+			i += 2
+		
 	func toBytes() -> PackedByteArray:
 		var returnBytes: PackedByteArray = []
 		var size: int = colors.size() * 2
 		returnBytes.resize(16)
-		returnBytes.encode_u32(0, NCLRMagic)
+		returnBytes.encode_u32(0, NCLRStamp)
 		returnBytes.encode_u16(4, 0xFEFF)
 		returnBytes.encode_u16(6, 0x0100)
 		returnBytes.encode_u32(8, size + 40)
@@ -136,12 +150,12 @@ class Palette:
 		var squareSize: int = 1
 		while(squareSize * squareSize < colors.size()):
 			squareSize += 1
-		var myImage = Image.create_empty(squareSize, squareSize, false, Image.FORMAT_RGBA8)
+		var retImage = Image.create_empty(squareSize, squareSize, false, Image.FORMAT_RGBA8)
 		var i = 0
 		while(i < colors.size()):
-			myImage.set_pixel(i / squareSize, i % squareSize, colors[i])
+			retImage.set_pixel(i / squareSize, i % squareSize, colors[i])
 			i += 1
-		return myImage
+		return retImage
 
 	# JASC-Palette
 	# https://liero.nl/lierohack/docformats/other-jasc.html
@@ -184,8 +198,8 @@ class Palette:
 # NCGR
 # https://github.com/AdAstra-LD/DS-Pokemon-Rom-Editor
 class NCGR:
-	const ncgrMagic: int = 0x4E434752 # "NCGR"
-	const charMagic: int = 0x43484152 # "CHAR"
+	const ncgrStamp: int = 0x4E434752 # "NCGR"
+	const charStamp: int = 0x43484152 # "CHAR"
 	const charHeader: PackedByteArray = [0x52, 0x41, 0x48, 0x43, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00]
 	
 	var myBytes: PackedByteArray
@@ -212,15 +226,15 @@ class NCGR:
 	var mappingType: int = 32
 	
 	static func isNCGR(bytes: PackedByteArray) -> bool:
-		var header = ntrHeader.new()
-		header.process(bytes)
-		return header.magic == ncgrMagic
+		var checkHeader = ntrHeader.new()
+		checkHeader.process(bytes)
+		return checkHeader.Stamp == ncgrStamp
 	
 	func process(bytes: PackedByteArray) -> void:
 		myBytes = bytes
 		header = ntrHeader.new()
 		header.process(bytes)
-		if (bytes.decode_u32(16) != charMagic):
+		if (bytes.decode_u32(16) != charStamp):
 			print("Invalid NCGR")
 			return
 		sectionSize = bytes.decode_u32(20)
@@ -258,7 +272,7 @@ class NCGR:
 			sopcCharNum = bytes.decode_u16(48 + tileSize + 14)
 
 		if (nTilesX == 0xFFFF):
-			var square: float = sqrt(float(numTiles*8))
+			var square: int = int(sqrt(float(numTiles*8)))
 			if (is_equal_approx(square, roundf(square))):
 				nTilesX = square
 				nTilesY = square
@@ -268,7 +282,7 @@ class NCGR:
 			if (nTilesX == 0):
 				nTilesX = 1
 			if (nTilesY == 0):
-				nTilesY == 1
+				nTilesY = 1
 
 	func decrypt(arr: Array[int]) -> Array[int]:
 		if (frontToBack):
@@ -383,8 +397,6 @@ class NCGR:
 		image.height = nTilesY
 		image.emptyPixels()
 		var imageSection: PackedByteArray = myBytes.slice(48)
-		
-		var writtenPixels: Array[Vector2i] = []
 		
 		var chunkMan: ChunkManager = ChunkManager.new(1, 1)
 		var chunksWide: int = (image.width / 8)
@@ -580,6 +592,263 @@ class NCGR:
 		bitDepth = bpp
 		encVal = enc
 		
+# BTX0
+# https://github.com/scurest/BTXViewer/blob/master/viewer.html#L168
+class BTX0:
+	const btx0Stamp: int = 0x30585442 # "BTX0"s
+	const texStamp: int = 0x30584554 # "TEX0"
+	
+	var myBytes: PackedByteArray
+	var header: ntrHeader
+	
+	var textures: Array[texData]
+	var numTex: int
+	
+	var totalHeight: int
+	var maxWidth: int
+	
+	var palettes: Array[Palette]
+	
+	class texData:
+		var texName: String
+		
+		var texParams: int
+		var vramAddr: int
+		
+		var width: int
+		var height: int
+		var format: int
+		var alpha0: int
+		
+		var byteLength: int = -1
+		var redundant: bool = false
+		var region: int = 0
+		
+		func calcByteLength() -> int:
+			var numTexels: int = width * height
+			match format:
+				0: return 0
+				1: return numTexels
+				2: return numTexels >> 2
+				3: return numTexels >> 1
+				4: return numTexels
+				5: return numTexels >> 2
+				6: return numTexels
+				7: return numTexels << 1
+				_: return numTexels
+		
+		func _to_string() -> String:
+			return texName
+
+		func processValues(bytes: PackedByteArray) -> void:
+			texParams = bytes.decode_u32(0)
+			vramAddr = (texParams & 0xffff) << 3
+			width = 8 << ((texParams >> 20) & 7)
+			height = 8 << ((texParams >> 23) & 7)
+			format = (texParams >> 26) & 7
+			alpha0 = (texParams >> 29) & 1
+			byteLength = calcByteLength()
+
+		var dataBytes: PackedByteArray
+		var dataBytesB: PackedByteArray
+		
+		func getTexels() -> Array[PackedByteArray]:
+			var retTexels: Array[PackedByteArray]
+			var i = 0
+			while (i < height):
+				retTexels.append(PackedByteArray())
+				retTexels[i].resize(width)
+				i += 1
+			match format:
+				1: return texelFormat1(retTexels)
+				2: return texelFormat2(retTexels)
+				3: return texelFormat3(retTexels)
+				4: return texelFormat4(retTexels)
+				5: return texelFormat5(retTexels)
+				6: return texelFormat6(retTexels)
+				7: return texelFormat7(retTexels)
+				_: return retTexels
+
+		func texelFormat1(retTexels: Array[PackedByteArray]) -> Array[PackedByteArray]:
+			var numBytes = calcByteLength()
+			var i = 0
+			while(i < numBytes):
+				var texel = dataBytes[i]
+				retTexels[i / width][i % width] = texel & 0x1F
+				i += 1
+			return retTexels
+		
+		func texelFormat2(retTexels: Array[PackedByteArray]) -> Array[PackedByteArray]:
+			var numBytes = calcByteLength()
+			var i = 0
+			var pix = 0
+			while(i < numBytes):
+				var byte = dataBytes[i]
+				var j = 0
+				while (j < 4):
+					var texel = byte & 3
+					byte >>= 2
+					retTexels[pix / width][pix % width] = texel
+					pix += 1
+					j += 1
+				i += 1
+			return retTexels
+			
+		func texelFormat3(retTexels: Array[PackedByteArray]) -> Array[PackedByteArray]:
+			var numBytes = calcByteLength()
+			var i = 0
+			var pix = 0
+			while(i < numBytes):
+				var byte = dataBytes[i]
+				var j = 0
+				while (j < 2):
+					var texel = byte & 15
+					byte >>= 4
+					retTexels[pix / width][pix % width] = texel
+					pix += 1
+					j += 1
+				i += 1
+			return retTexels
+			
+		func texelFormat4(retTexels: Array[PackedByteArray]) -> Array[PackedByteArray]:
+			var numBytes = calcByteLength()
+			var i = 0
+			while(i < numBytes):
+				var texel = dataBytes[i]
+				retTexels[i / width][i % width] = texel & 0x1F
+				i += 1
+			return retTexels
+			
+		func texelFormat5(retTexels: Array[PackedByteArray]) -> Array[PackedByteArray]:			
+			print("Texel Format 5 is not strictly paletted. Figure out later.")
+			
+			return retTexels
+			
+		func texelFormat6(retTexels: Array[PackedByteArray]) -> Array[PackedByteArray]:
+			var numBytes = calcByteLength()
+			var i = 0
+			while(i < numBytes):
+				var texel = dataBytes[i]
+				retTexels[i / width][i % width] = texel & 7
+				i += 1
+			return retTexels
+			
+		func texelFormat7(retTexels: Array[PackedByteArray]) -> Array[PackedByteArray]:			
+			print("Texel Format 7 is not paletted. Figure out later.")
+			
+			return retTexels
+		
+	
+	static func isBTX0(bytes: PackedByteArray) -> bool:
+		var checkHeader = ntrHeader.new()
+		checkHeader.process(bytes)
+		return checkHeader.Stamp == btx0Stamp
+	
+	func getTexInfo(bytes: PackedByteArray) -> void:
+		var texDataList: Array[texData] = []
+		var count:int =  bytes[1]
+		var valSize = bytes.decode_u16(12 + (4*count))
+		var valOffset = 12 + (4*count) + 4
+		var nameOffset = valOffset + (count*valSize)
+		
+		var i = 0;
+		while (i < count):
+			var newTexData: texData = texData.new()
+			newTexData.texName = bytes.slice(nameOffset, nameOffset + 16).get_string_from_ascii()
+			var values: PackedByteArray = bytes.slice(valOffset, valOffset + valSize)
+			newTexData.processValues(values)
+			texDataList.append(newTexData)
+			
+			valOffset += valSize;
+			nameOffset += 16
+			i += 1
+			
+		textures = texDataList
+	
+	func getPalInfo(bytes: PackedByteArray, palData: PackedByteArray) -> void:
+		var palDataList: Array[Palette] = []
+		var count:int =  bytes[1]
+		var valSize = bytes.decode_u16(12 + (4*count))
+		var valOffset = 12 + (4*count) + 4
+		
+		var i = 0;
+		while (i < count):
+			var newPal: Palette = Palette.new()
+			var values: PackedByteArray = bytes.slice(valOffset, valOffset + valSize)
+			newPal.initFromBTX(values, palData)
+			palDataList.append(newPal)
+			
+			valOffset += valSize;
+			i += 1
+		
+		palettes = palDataList
+	
+	func process(bytes: PackedByteArray) -> void:
+		myBytes = bytes
+		header = ntrHeader.new()
+		header.process(bytes)
+		
+		var startBlockOffset: int = bytes.decode_u32(16)
+		var tex0Block: PackedByteArray = bytes.slice(startBlockOffset)
+		var tex0Stamp = tex0Block.decode_u32(0)
+		if (tex0Stamp != texStamp):
+			print("Wrong texture stamp")
+			return
+		
+		var textureDictOffset: int = tex0Block.decode_u32(14)
+		var textureDataOffset: int = tex0Block.decode_u32(20)
+		var textureBytes: PackedByteArray = tex0Block.slice(textureDataOffset)
+		getTexInfo(tex0Block.slice(textureDictOffset))
+		
+		var palettesDictOffset = tex0Block.decode_u32(52)
+		var palettesDataOffset = tex0Block.decode_u32(56)
+		var palettesBytes = tex0Block.slice(palettesDataOffset)
+		getPalInfo(tex0Block.slice(palettesDictOffset), palettesBytes)
+		
+		var i = 0
+		var texture5DataOffset: int = tex0Block.decode_u32(36)
+		var texture5DataOffsetB: int = tex0Block.decode_u32(40)
+		var texture5Data: PackedByteArray = tex0Block.slice(texture5DataOffset)
+		var texture5DataB: PackedByteArray = tex0Block.slice(texture5DataOffsetB)
+		totalHeight = 0
+		
+		var processedData: Array[int] = []
+		
+		while (i < textures.size()):
+			var curr: texData = textures[i]
+			var redundIdx = processedData.find(curr.vramAddr)
+			var region = 0
+			if (redundIdx != -1):
+				textures[i].redundant = true
+				textures[i].region = redundIdx
+			else:
+				totalHeight += curr.height
+				if (curr.width > maxWidth):
+					maxWidth = curr.width
+				if (curr.format == 5):
+					textures[i].dataBytes = texture5Data.slice(curr.vramAddr, curr.vramAddr + curr.byteLength)
+					textures[i].dataBytesB = texture5DataB.slice(curr.vramAddr>>1, (curr.vramAddr>>1) + (curr.byteLength>>1))
+				elif (curr.format != 0):
+					textures[i].dataBytes = textureBytes.slice(curr.vramAddr, curr.vramAddr + curr.byteLength)
+				textures[i].region = region
+				region += 1
+				processedData.append(curr.vramAddr)
+			i += 1
+
+	func setImage(image: IndexedImage) -> void:
+		image.width = maxWidth
+		image.height = totalHeight
+		image.myPalette = palettes[0]
+		image.myImage = Image.create_empty(maxWidth, totalHeight, false, Image.FORMAT_RGBA8)
+		var i = 0
+		var currHeight = 0;
+		while (i < textures.size()):
+			if (not textures[i].redundant):
+				image.myPixels.append_array(textures[i].getTexels())
+				image.regions.append(Rect2i(0, currHeight, textures[i].height, textures[i].width))
+				currHeight += textures[i].height
+			i += 1
+		
 # Indexed Image
 # https://github.com/turtleisaac/Nds4j/blob/main/src/main/java/io/github/turtleisaac/nds4j/images/IndexedImage.java
 class IndexedImage:
@@ -595,7 +864,7 @@ class IndexedImage:
 	var height: int
 	var myPalette: Palette
 	var bpp: int
-	var regions: Vector3i = Vector3i(0, 0, 1)
+	var regions: Array[Rect2i] = []
 	
 	var myParams: NCGRParams
 	class NCGRParams:
@@ -605,20 +874,14 @@ class IndexedImage:
 		var vram: bool
 		var frontToBack: bool
 	
+	class BTX0Params:
+		var whatever
+	
 	func region(r: int) -> Image:
-		if (r >= regions.z):
+		if (r >= regions.size()):
 			print("Bad Region Request")
 			return myImage
-		var startX = 0
-		var startY = 0
-		var i = 1
-		while (i < r):
-			startX += regions.x
-			if (startX >= width):
-				startX = 0
-				startY += regions.y
-			i += 1
-		return myImage.get_region(Rect2i(startX, startY, regions.x, regions.y))
+		return myImage.get_region(regions[r])
 	
 	func emptyPixels() -> void:
 		myImage = Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
@@ -638,8 +901,18 @@ class IndexedImage:
 		var y = 0
 		while(y < height):
 			var x = 0
-			while(x < width):
+			while(x < width && x < myPixels[y].size()):
 				var pixInd = myPixels[y][x]
+				myImage.set_pixel(x, y, myPalette.colors[pixInd])
+				x += 1
+			y += 1
+	
+	func palTest() -> void:
+		var y = 0
+		while(y < height):
+			var x = 0
+			while(x < width):
+				var pixInd = x % myPalette.colors.size()
 				myImage.set_pixel(x, y, myPalette.colors[pixInd])
 				x += 1
 			y += 1
@@ -755,6 +1028,12 @@ class IndexedImage:
 		populatePNG(decompBytes)
 		render()
 	
+	func fromBTX0(bytes: PackedByteArray) -> void:
+		var myBTX0 = BTX0.new()
+		myBTX0.process(bytes)
+		myBTX0.setImage(self)
+		render()
+	
 	func fromNCGR(bytes: PackedByteArray, pal: Palette) -> void:
 		var myNCGR = NCGR.new()
 		myPalette = pal
@@ -772,7 +1051,7 @@ class IndexedImage:
 		var imageHead: PackedByteArray = []
 		imageHead.append_array(imageChunkHeader)
 		print(myPalette.bitDepth)
-		var bpp: int = myPalette.bitDepth
+		bpp = myPalette.bitDepth
 		imageHead.resize(imageHead.size() + 8)
 		imageHead.encode_u32(4, swapEndianInt32(width))
 		imageHead.encode_u32(8, swapEndianInt32(height))
@@ -818,6 +1097,10 @@ class IndexedImage:
 		returnArray.encode_u32(returnArray.size() - 4, swapEndianInt32(NdsGd.CRC.calculateCRC32(endChunkHeader)))
 		
 		return returnArray
+	
+	func toBTX0(p: BTX0Params) -> PackedByteArray:
+		
+		return []
 	
 	func toNCGR(p: NCGRParams) -> PackedByteArray:
 		var myNCGR: NCGR = NCGR.new()

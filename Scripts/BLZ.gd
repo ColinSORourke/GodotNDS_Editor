@@ -1,5 +1,5 @@
 extends Node
-
+@warning_ignore_start("integer_division")
 # MUCH OF THIS CODE IS NOT MY OWN ALGORITHMS
 # This is a port of a lot of excellent algorithms written by other cool people!
 # Including:
@@ -280,12 +280,10 @@ class LZCompress:
 		else:
 			return [result, 0, 0]
 		
-	func compressionSearch(pos: int, searchCount: int = 0) -> Vector2i:
+	func compressionSearch(pos: int) -> Vector2i:
 		var start: int = max(0, pos - maxMatchDiff)
 		var lower: int = 0
 		var upper: int = min(maxMatchLen, dataSize - pos)
-		
-		var startTime: float = 0
 		
 		var recordMatchPos = 0
 		var recordMatchLen = 0
@@ -322,7 +320,6 @@ static func detectAppendedData(file: FileAccess) -> int:
 			var composite: int = file.get_32()
 			headerLength = composite >> 24
 			var compressedLength: int = composite & 0xFFFFFF
-			var extraSize: int = file.get_32()
 			
 			if (headerLength < 8 or compressedLength > file.get_length()):
 				possibleAmt += 4

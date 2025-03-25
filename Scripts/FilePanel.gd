@@ -9,12 +9,12 @@ func activate() -> void:
 	self.visible = true
 	$FileName.visible = true
 	$FileName.text = ProjManager.myFileName
-	var myFileString = ProjManager.myFile.hex_encode().to_upper()
-	var myFileStringSpaced = ""
+	var myFileString: String = ProjManager.myFile.hex_encode().to_upper()
+	var myFileStringSpaced: String = ""
 	myFileStringSpaced = myFileStringSpaced.rpad(myFileString.length() * 1.5)
-	var i = 2
-	var newPos = 2
-	var count = 1
+	var i: int = 2
+	var newPos: int = 2
+	var count: int = 1
 	while (i < myFileString.length() + 1):
 		myFileStringSpaced[newPos - 2] = myFileString[i-2]
 		myFileStringSpaced[newPos - 1] = myFileString[i-1]
@@ -49,6 +49,12 @@ func activate() -> void:
 		$FileButtons/LoadImage.visible = true
 	else:
 		$FileButtons/LoadImage.visible = false
+		
+	if (ProjManager.myFileName.get_extension() == "btx0"):
+		$FileButtons/LoadBTX.visible = true
+	else:
+		$FileButtons/LoadBTX.visible = false
+	
 	$FileButtons/ImportPNGIMG.visible = false
 	$FileButtons/ShowHex.visible = false
 	$FileButtons/SavePNG.visible = false
@@ -87,9 +93,9 @@ func importFile(path: String) -> void:
 	$FileDialog.clear_filters()
 	
 func goto() -> void:
-	var position = $Hex/LineEdit.text.hex_to_int()
-	$Hex/HexDisplay.select(position/8, position%8 * 3, position/8, position%8 * 3 + 2, 0)
-	$Hex/HexDisplay.scroll_vertical = position/8
+	var hexPos = $Hex/LineEdit.text.hex_to_int()
+	$Hex/HexDisplay.select(hexPos/8, hexPos%8 * 3,hexPos/8, hexPos%8 * 3 + 2, 0)
+	$Hex/HexDisplay.scroll_vertical = hexPos/8
 
 func duplicateFile() -> void:
 	ProjManager.duplicateFile()
@@ -104,7 +110,9 @@ func loadPalette() -> void:
 func swapToHex() -> void:
 	$ImageTexture.visible = false
 	$Hex.visible = true
-	$FileButtons/LoadImage.visible = true
+	match ProjManager.myFileName.get_extension():
+		"btx0": $FileButtons/LoadBTX.visible = true
+		"ncgr": $FileButtons/LoadImage.visible = true
 	$FileButtons/ImportPNGIMG.visible = false
 	$FileButtons/ShowHex.visible = false
 	$FileButtons/SavePNG.visible = false
@@ -119,6 +127,14 @@ func loadImage() -> void:
 	$FileButtons/ImportPNGIMG.visible = true
 	$FileButtons/SavePNG.visible = true
 	
+func loadBTX() -> void:
+	var texture = ProjManager.loadBTX()
+	$Hex.visible = false
+	$ImageTexture.texture = texture
+	$ImageTexture.visible = true
+	$FileButtons/LoadBTX.visible = false
+	$FileButtons/ShowHex.visible = true
+
 func saveImage() -> void:
 	ProjManager.exportImage()
 

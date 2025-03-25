@@ -188,8 +188,8 @@ offset_top = 216.0
 offset_right = 289.0
 offset_bottom = 1056.0
 theme = ExtResource("3_6eryf")
-theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 30
 theme_override_styles/panel = SubResource("StyleBoxFlat_7q7v1")
 allow_search = false
@@ -393,6 +393,18 @@ theme_override_styles/normal = ExtResource("5_2bcqt")
 text = "Load Image
 "
 
+[node name="LoadBTX" type="Button" parent="FilePanel/FileButtons"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 8
+theme = ExtResource("3_6eryf")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = ExtResource("5_2bcqt")
+theme_override_styles/pressed = ExtResource("4_snj14")
+theme_override_styles/normal = ExtResource("5_2bcqt")
+text = "Load BTX
+"
+
 [node name="ShowHex" type="Button" parent="FilePanel/FileButtons"]
 visible = false
 layout_mode = 2
@@ -521,6 +533,7 @@ stretch_mode = 4
 [connection signal="pressed" from="FilePanel/FileButtons/Duplicate" to="FilePanel" method="duplicateFile"]
 [connection signal="pressed" from="FilePanel/FileButtons/LoadPLT" to="FilePanel" method="loadPalette"]
 [connection signal="pressed" from="FilePanel/FileButtons/LoadImage" to="FilePanel" method="loadImage"]
+[connection signal="pressed" from="FilePanel/FileButtons/LoadBTX" to="FilePanel" method="loadBTX"]
 [connection signal="pressed" from="FilePanel/FileButtons/ShowHex" to="FilePanel" method="swapToHex"]
 [connection signal="pressed" from="FilePanel/FileButtons/SavePNG" to="FilePanel" method="saveImage"]
 [connection signal="pressed" from="FilePanel/FileButtons/ImportPAL" to="FilePanel" method="importJascPal"]

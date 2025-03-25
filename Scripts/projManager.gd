@@ -54,7 +54,6 @@ func bannerImage() -> ImageTexture:
 	var idx = 0
 	var chunkMan: FileFormats.NCGR.ChunkManager = FileFormats.NCGR.ChunkManager.new(1, 1)
 	var chunksWide: int = 4
-	var pitch: int = 4
 	print("Entering Loop")
 	while(i < 16):
 		var j = 0
@@ -105,7 +104,7 @@ func loadFile(path: String) -> void:
 	if (NdsGd.NitroArchive.isNarc((fileBytes))):
 		NarcPath = filePath
 		myNarc = NdsGd.NitroArchive.new()
-		var resultCode: int = myNarc.unpack(fileBytes)
+		myNarc.unpack(fileBytes)
 	else:
 		myFile = fileBytes
 		myFileName = path.get_file()
@@ -197,13 +196,18 @@ func loadImage() -> ImageTexture:
 	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.myImage)
 	return myTexture
 	
-func loadBtx() -> ImageTexture:
-	#if(!FileFormats.BTX.isBTX(myFile)):
-		#print("Not an BTX!")
-		#return null
+func loadBTX() -> ImageTexture:
+	if(!FileFormats.BTX0.isBTX0(myFile)):
+		print("Not a BTX0!")
+		return null
 	myImage = FileFormats.IndexedImage.new()
-	#myImage.fromBTX(myFile)
-	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.region(0))
+	myImage.fromBTX0(myFile)
+	
+	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.myImage)
+	return myTexture
+	
+func getRegion(r: int) -> ImageTexture:
+	var myTexture: ImageTexture = ImageTexture.create_from_image(myImage.region(r))
 	return myTexture
 
 func exportImage() -> void:
